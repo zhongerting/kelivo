@@ -24,7 +24,7 @@
          startup gate rejects. Kelivo ships its own backup (WebDAV/S3/local
          export), so system backup is disabled. -->
     <application
-        android:label="Kelivo"
+        android:label="${appLabel}"
         android:name="${applicationName}"
         android:allowBackup="false"
         android:fullBackupContent="false"
