@@ -1701,9 +1701,9 @@ class _HomePageState extends State<HomePage>
     await provider.initialize();
     if (!mounted) return;
     final items = provider.items;
-    if (items.isEmpty) return;
 
     if (isDesktop) {
+      if (items.isEmpty) return;
       await showDesktopInstructionInjectionPopover(
         context,
         anchorKey: _inputBarKey,
