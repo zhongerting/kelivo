@@ -16,7 +16,7 @@ class QuickPhraseMenu extends StatelessWidget {
   });
 
   final List<QuickPhrase> phrases;
-  final ValueChanged<QuickPhrase> onSelect;
+  final ValueChanged<QuickPhraseSelection> onSelect;
   final Offset anchorPosition;
 
   @override
@@ -24,7 +24,7 @@ class QuickPhraseMenu extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final size = MediaQuery.of(context).size;
-    AppLocalizations.of(context); // keep localization wired; no new strings
+    final l10n = AppLocalizations.of(context)!;
 
     // Calculate menu position anchored to the input bar's global left and bottom inset
     final double menuWidth = 250;
@@ -108,57 +108,118 @@ class QuickPhraseMenu extends StatelessWidget {
                             return IosCardPress(
                               borderRadius: BorderRadius.zero,
                               baseColor: Colors.transparent,
+                              haptics: false,
                               onTap: () {
                                 try {
                                   Haptics.light();
                                 } catch (_) {}
-                                onSelect(phrase);
+                                onSelect(
+                                  QuickPhraseSelection(
+                                    phrase: phrase,
+                                    action: QuickPhraseAction.send,
+                                  ),
+                                );
                               },
                               child: Padding(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 16,
                                   vertical: 12,
                                 ),
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                child: Row(
                                   children: [
-                                    Row(
-                                      children: [
-                                        Icon(
-                                          phrase.isGlobal
-                                              ? Lucide.Zap
-                                              : Lucide.botMessageSquare,
-                                          size: 14,
-                                          color: cs.primary.withValues(
-                                            alpha: 0.7,
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                phrase.isGlobal
+                                                    ? Lucide.Zap
+                                                    : Lucide.botMessageSquare,
+                                                size: 14,
+                                                color: cs.primary.withValues(
+                                                  alpha: 0.7,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 6),
+                                              Expanded(
+                                                child: Text(
+                                                  phrase.title,
+                                                  style: TextStyle(
+                                                    fontSize: 14,
+                                                    fontWeight:
+                                                        AppFontWeights.semibold,
+                                                  ),
+                                                  maxLines: 1,
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ],
                                           ),
-                                        ),
-                                        const SizedBox(width: 6),
-                                        Expanded(
-                                          child: Text(
-                                            phrase.title,
+                                          const SizedBox(height: 4),
+                                          Text(
+                                            phrase.content,
                                             style: TextStyle(
-                                              fontSize: 14,
-                                              fontWeight:
-                                                  AppFontWeights.semibold,
+                                              fontSize: 12,
+                                              color: cs.onSurface.withValues(
+                                                alpha: 0.6,
+                                              ),
                                             ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
                                           ),
-                                        ),
-                                      ],
+                                        ],
+                                      ),
                                     ),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      phrase.content,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: cs.onSurface.withValues(
-                                          alpha: 0.6,
+                                    const SizedBox(width: 10),
+                                    Semantics(
+                                      button: true,
+                                      label: l10n.quickPhraseAppendButton,
+                                      child: GestureDetector(
+                                        behavior: HitTestBehavior.opaque,
+                                        onTap: () {
+                                          try {
+                                            Haptics.light();
+                                          } catch (_) {}
+                                          onSelect(
+                                            QuickPhraseSelection(
+                                              phrase: phrase,
+                                              action: QuickPhraseAction.append,
+                                            ),
+                                          );
+                                        },
+                                        child: Container(
+                                          constraints: const BoxConstraints(
+                                            minWidth: 48,
+                                            minHeight: 32,
+                                          ),
+                                          alignment: Alignment.center,
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 10,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: cs.primary.withValues(
+                                              alpha: isDark ? 0.18 : 0.10,
+                                            ),
+                                            borderRadius: BorderRadius.circular(
+                                              8,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            l10n.quickPhraseAppendButton,
+                                            maxLines: 1,
+                                            style: TextStyle(
+                                              color: cs.primary,
+                                              fontSize: 12,
+                                              fontWeight:
+                                                  AppFontWeights.semibold,
+                                            ),
+                                          ),
                                         ),
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
                                 ),
@@ -179,14 +240,14 @@ class QuickPhraseMenu extends StatelessWidget {
   }
 }
 
-Future<QuickPhrase?> showQuickPhraseMenu({
+Future<QuickPhraseSelection?> showQuickPhraseMenu({
   required BuildContext context,
   required List<QuickPhrase> phrases,
   required Offset position,
 }) async {
   if (phrases.isEmpty) return null;
 
-  return await showDialog<QuickPhrase>(
+  return await showDialog<QuickPhraseSelection>(
     context: context,
     barrierColor: Colors.transparent,
     barrierDismissible: true,
@@ -197,7 +258,7 @@ Future<QuickPhrase?> showQuickPhraseMenu({
           color: Colors.transparent,
           child: QuickPhraseMenu(
             phrases: phrases,
-            onSelect: (phrase) => Navigator.of(ctx).pop(phrase),
+            onSelect: (selection) => Navigator.of(ctx).pop(selection),
             anchorPosition: position,
           ),
         ),

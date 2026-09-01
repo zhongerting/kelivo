@@ -10957,6 +10957,12 @@ abstract class AppLocalizations {
   /// **'Quick Phrase'**
   String get quickPhraseMenuTitle;
 
+  /// No description provided for @quickPhraseAppendButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Append'**
+  String get quickPhraseAppendButton;
+
   /// No description provided for @chatInputBarQuickPhraseTooltip.
   ///
   /// In en, this message translates to:

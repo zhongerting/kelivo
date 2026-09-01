@@ -5,10 +5,11 @@ import 'package:flutter/material.dart';
 
 import '../core/models/quick_phrase.dart';
 import '../icons/lucide_adapter.dart';
+import '../l10n/app_localizations.dart';
 import 'package:Kelivo/theme/app_font_weights.dart';
 import '../theme/design_tokens.dart';
 
-Future<QuickPhrase?> showDesktopQuickPhrasePopover(
+Future<QuickPhraseSelection?> showDesktopQuickPhrasePopover(
   BuildContext context, {
   required GlobalKey anchorKey,
   required List<QuickPhrase> phrases,
@@ -30,18 +31,18 @@ Future<QuickPhrase?> showDesktopQuickPhrasePopover(
     size.height,
   );
 
-  final completer = Completer<QuickPhrase?>();
+  final completer = Completer<QuickPhraseSelection?>();
   late OverlayEntry entry;
   entry = OverlayEntry(
     builder: (ctx) => _QuickPhrasePopover(
       anchorRect: anchorRect,
       anchorWidth: size.width,
       phrases: phrases,
-      onSelect: (p) {
+      onSelect: (selection) {
         try {
           entry.remove();
         } catch (_) {}
-        if (!completer.isCompleted) completer.complete(p);
+        if (!completer.isCompleted) completer.complete(selection);
       },
       onClose: () {
         try {
@@ -67,7 +68,7 @@ class _QuickPhrasePopover extends StatefulWidget {
   final Rect anchorRect;
   final double anchorWidth;
   final List<QuickPhrase> phrases;
-  final ValueChanged<QuickPhrase> onSelect;
+  final ValueChanged<QuickPhraseSelection> onSelect;
   final VoidCallback onClose;
 
   @override
@@ -157,9 +158,9 @@ class _QuickPhrasePopoverState extends State<_QuickPhrasePopover>
                         ),
                         child: _QuickPhraseList(
                           phrases: widget.phrases,
-                          onSelect: (p) async {
+                          onSelect: (selection) async {
                             if (_closing) return;
-                            widget.onSelect(p);
+                            widget.onSelect(selection);
                           },
                         ),
                       ),
@@ -216,7 +217,7 @@ class _GlassPanel extends StatelessWidget {
 class _QuickPhraseList extends StatelessWidget {
   const _QuickPhraseList({required this.phrases, required this.onSelect});
   final List<QuickPhrase> phrases;
-  final ValueChanged<QuickPhrase> onSelect;
+  final ValueChanged<QuickPhraseSelection> onSelect;
 
   @override
   Widget build(BuildContext context) {
@@ -236,7 +237,18 @@ class _QuickPhraseList extends StatelessWidget {
                 title: p.title,
                 preview: p.content,
                 isGlobal: p.isGlobal,
-                onTap: () => onSelect(p),
+                onTap: () => onSelect(
+                  QuickPhraseSelection(
+                    phrase: p,
+                    action: QuickPhraseAction.send,
+                  ),
+                ),
+                onAppend: () => onSelect(
+                  QuickPhraseSelection(
+                    phrase: p,
+                    action: QuickPhraseAction.append,
+                  ),
+                ),
               ),
             );
           },
@@ -252,11 +264,13 @@ class _RowItem extends StatefulWidget {
     required this.preview,
     required this.isGlobal,
     required this.onTap,
+    required this.onAppend,
   });
   final String title;
   final String preview;
   final bool isGlobal;
   final VoidCallback onTap;
+  final VoidCallback onAppend;
 
   @override
   State<_RowItem> createState() => _RowItemState();
@@ -272,6 +286,7 @@ class _RowItemState extends State<_RowItem> {
     final isDark = theme.brightness == Brightness.dark;
     final baseBg = Colors.transparent;
     final hoverBg = cs.onSurface.withValues(alpha: isDark ? 0.12 : 0.10);
+    final l10n = AppLocalizations.of(context)!;
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovered = true),
@@ -327,6 +342,21 @@ class _RowItemState extends State<_RowItem> {
                     decoration: TextDecoration.none,
                   ),
                 ),
+              ),
+              const SizedBox(width: 10),
+              TextButton(
+                onPressed: widget.onAppend,
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(52, 30),
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  foregroundColor: cs.primary,
+                  textStyle: TextStyle(
+                    fontSize: 12,
+                    fontWeight: AppFontWeights.semibold,
+                  ),
+                ),
+                child: Text(l10n.quickPhraseAppendButton),
               ),
             ],
           ),

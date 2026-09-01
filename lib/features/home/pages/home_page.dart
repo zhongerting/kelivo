@@ -1883,7 +1883,7 @@ class _HomePageState extends State<HomePage>
 
     _controller.dismissKeyboard();
 
-    QuickPhrase? selected;
+    QuickPhraseSelection? selected;
     if (PlatformUtils.isDesktop) {
       selected = await showDesktopQuickPhrasePopover(
         context,

@@ -45,3 +45,12 @@ class QuickPhrase {
     assistantId: json['assistantId'] as String?,
   );
 }
+
+enum QuickPhraseAction { send, append }
+
+class QuickPhraseSelection {
+  const QuickPhraseSelection({required this.phrase, required this.action});
+
+  final QuickPhrase phrase;
+  final QuickPhraseAction action;
+}

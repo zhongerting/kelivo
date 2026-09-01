@@ -5746,6 +5746,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get quickPhraseMenuTitle => '快捷短语';
 
   @override
+  String get quickPhraseAppendButton => '追加';
+
+  @override
   String get chatInputBarQuickPhraseTooltip => '快捷短语';
 
   @override

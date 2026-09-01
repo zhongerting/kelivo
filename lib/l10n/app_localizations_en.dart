@@ -5978,6 +5978,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get quickPhraseMenuTitle => 'Quick Phrase';
 
   @override
+  String get quickPhraseAppendButton => 'Append';
+
+  @override
   String get chatInputBarQuickPhraseTooltip => 'Quick Phrase';
 
   @override

@@ -1,8 +1,104 @@
-# AFENTS.md
+# AGENTS.md
 
 ## Project overview
 
 Kelivo is a cross-platform LLM chat client built with Flutter, targeting iOS, Android, macOS, Windows, and Linux. Package name is `Kelivo` — imports use `package:Kelivo/...`.
+
+## Fork mission
+
+This repository is the user's personal Kelivo fork. The primary product goal is
+an Android-ready chat client with faster access to reusable prompts and better
+compatibility with the user's existing SillyTavern data. Keep the application
+cross-platform, but treat the Android release build as the main delivery
+artifact.
+
+Do not remove the custom behavior listed below while merging upstream changes.
+When upstream touches the same area, preserve the intent of the customization
+and adapt it to the new architecture instead of blindly accepting either side
+of the merge.
+
+## Repository topology and upstream sync
+
+- `origin` is the user's fork: `https://github.com/zhongerting/kelivo.git`.
+- `upstream` is the official repository: `https://github.com/Chevey339/kelivo.git`.
+- `master` follows the official upstream branch.
+- `codex/chat-instruction-shortcuts` is the long-lived customization branch.
+- Pushes to `upstream` are intentionally disabled. Only push user work to
+  `origin`.
+- `.github/workflows/sync-upstream.yml` runs daily at approximately 08:23
+  Asia/Shanghai, updates the fork's `master`, merges it into the customization
+  branch, runs its focused verification, and pushes the result.
+- Automatic sync cannot resolve merge conflicts. If it fails, merge
+  `origin/master` into the customization branch locally, preserve the features
+  below, run verification, and push the repaired branch.
+
+## Custom work in this fork
+
+The following work is part of the fork's intended product behavior:
+
+- **Chat instruction injection management**: instruction-injection cards can be
+  opened and managed from the chat interface, including adding, editing, and
+  deleting cards without returning to Settings.
+- **Official update notices disabled by default**: new installations of this
+  fork do not show official-build update notices. An explicit saved user choice
+  still wins.
+- **SillyTavern world-book import**: mobile and desktop world-book pages accept
+  common SillyTavern lorebook JSON shapes, normalize supported fields, report
+  skipped entries or adjusted unsupported settings, and retain native Kelivo
+  import support. A minimal fixture lives at
+  `samples/sillytavern-minimal-world-book.json`.
+- **Android debug coexistence**: debug builds use a distinct application ID and
+  label so they can coexist with the installed release build.
+- **Custom Android launcher icon**: launcher assets and
+  `flutter_launcher_icons.yaml` use the user's supplied icon.
+- **Quick-phrase dual action**: tapping a quick-phrase row sends that phrase
+  immediately. The `Append` / `追加` button on the right inserts it at the
+  current input selection without sending. Direct send must preserve any draft
+  text and attachments already in the composer; append must restore focus to
+  the input. Mobile and desktop menus return the same explicit action type
+  (`QuickPhraseSelection`) and must retain identical semantics.
+
+## Current task and acceptance criteria
+
+The current customization task is to make reusable prompts fast enough for
+normal chat use without repeatedly entering Settings. For quick phrases, the
+acceptance criteria are:
+
+1. Tapping the phrase title/content area sends only that phrase through the
+   normal chat send path.
+2. Tapping `Append` / `追加` inserts the phrase at the current caret or replaces
+   the current selection, without sending it.
+3. The append tap must not bubble into the row's send action.
+4. Existing composer text and attachments remain untouched by direct send.
+5. Mobile and desktop behavior, localization, and accessibility labels remain
+   aligned.
+
+The focused regression test is
+`test/features/quick_phrase/widgets/quick_phrase_menu_test.dart`.
+
+## Android release delivery
+
+- Deliver **Release** APKs for real-device use. Flutter Debug APKs caused severe
+  keyboard-opening lag on the user's Android device and are not valid
+  performance artifacts.
+- The repository path contains non-ASCII characters. For reliable Android
+  builds on this machine, stage or update the source in the ASCII-only worktree
+  `E:\devtools\kelivo-apk-build`.
+- Use JDK 17 from `E:\devtools\temurin-17\jdk-17.0.20.1+1` when the local Gradle
+  environment does not select a compatible JDK automatically.
+- A normal delivery build is `flutter build apk --release`. Confirm the output
+  is under `build/app/outputs/flutter-apk/` and report the exact path and file
+  size to the user.
+
+## Known local verification baseline
+
+As of 2026-09-01, the focused quick-phrase test and strict analysis of all files
+touched by that feature pass. The full Windows test suite has unrelated
+pre-existing failures, primarily assertions that compare `/` and `\\` path
+separators. Full strict analysis also reports four existing
+`unawaited_return_in_try_block` warnings outside this feature. Do not attribute
+those baseline failures to quick phrases, but do report them accurately and do
+not add new failures.
 
 ## Architecture
 

@@ -2411,8 +2411,16 @@ class HomePageController extends ChangeNotifier {
   // Public Methods - Quick Phrases
   // ============================================================================
 
-  Future<void> handleQuickPhraseSelection(QuickPhrase? selected) async {
+  Future<void> handleQuickPhraseSelection(
+    QuickPhraseSelection? selected,
+  ) async {
     if (selected == null) return;
+    if (selected.action == QuickPhraseAction.send) {
+      await sendMessage(ChatInputData(text: selected.phrase.content));
+      return;
+    }
+
+    final phrase = selected.phrase;
     final text = _inputController.text;
     final selection = _inputController.selection;
     final start = (selection.start >= 0 && selection.start <= text.length)
@@ -2425,14 +2433,16 @@ class HomePageController extends ChangeNotifier {
         ? selection.end
         : start;
 
-    final newText = text.replaceRange(start, end, selected.content);
+    final newText = text.replaceRange(start, end, phrase.content);
     _inputController.value = _inputController.value.copyWith(
       text: newText,
-      selection: TextSelection.collapsed(
-        offset: start + selected.content.length,
-      ),
+      selection: TextSelection.collapsed(offset: start + phrase.content.length),
       composing: TextRange.empty,
     );
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!_context.mounted) return;
+      _inputFocus.requestFocus();
+    });
     notifyListeners();
   }
 

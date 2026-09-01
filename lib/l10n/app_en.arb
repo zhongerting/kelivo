@@ -2537,6 +2537,7 @@
   "quickPhraseEditButton": "Edit",
   "quickPhraseDeleteButton": "Delete",
   "quickPhraseMenuTitle": "Quick Phrase",
+  "quickPhraseAppendButton": "Append",
   "chatInputBarQuickPhraseTooltip": "Quick Phrase",
   "assistantEditQuickPhraseDescription": "Manage quick phrases for this assistant. Click the button below to add phrases.",
   "assistantEditManageQuickPhraseButton": "Manage Quick Phrases",
