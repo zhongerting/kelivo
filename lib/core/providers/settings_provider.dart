@@ -1128,7 +1128,7 @@ class SettingsProvider extends ChangeNotifier {
     _keepScreenOnDuringGeneration =
         prefs.getBool(_displayKeepScreenOnDuringGenerationKey) ?? false;
     ScreenWakelock.setEnabled(_keepScreenOnDuringGeneration);
-    _showAppUpdates = prefs.getBool(_displayShowAppUpdatesKey) ?? true;
+    _showAppUpdates = prefs.getBool(_displayShowAppUpdatesKey) ?? false;
     _keepSidebarOpenOnAssistantTap =
         prefs.getBool(_displayKeepSidebarOpenOnAssistantTapKey) ?? false;
     _keepSidebarOpenOnTopicTap =
@@ -5424,7 +5424,7 @@ Requirements:
   }
 
   // Display: show app updates notification
-  bool _showAppUpdates = true;
+  bool _showAppUpdates = false;
   bool get showAppUpdates => _showAppUpdates;
   Future<void> setShowAppUpdates(bool v) async {
     if (_showAppUpdates == v) return;
