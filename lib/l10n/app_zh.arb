@@ -2806,6 +2806,38 @@
       }
     }
   },
+  "worldBookImportSuccess": "已导入 {count} 个世界书条目",
+  "@worldBookImportSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "worldBookImportSillyTavernSuccess": "已导入 {count} 个 SillyTavern 条目",
+  "@worldBookImportSillyTavernSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "worldBookImportSillyTavernAdjusted": "已导入 {count} 个 SillyTavern 条目；不受支持的高级设置已忽略。",
+  "@worldBookImportSillyTavernAdjusted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "worldBookImportSkippedEntries": "已跳过 {count} 个无效条目。",
+  "@worldBookImportSkippedEntries": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "worldBookNoEntriesHint": "暂无条目",
   "worldBookUnnamedEntry": "未命名条目",
   "worldBookKeywordsLine": "关键词：{keywords}",

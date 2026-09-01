@@ -14143,6 +14143,30 @@ abstract class AppLocalizations {
   /// **'Export failed: {error}'**
   String worldBookExportFailed(String error);
 
+  /// No description provided for @worldBookImportSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported {count} world book entries'**
+  String worldBookImportSuccess(int count);
+
+  /// No description provided for @worldBookImportSillyTavernSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported {count} SillyTavern entries'**
+  String worldBookImportSillyTavernSuccess(int count);
+
+  /// No description provided for @worldBookImportSillyTavernAdjusted.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported {count} SillyTavern entries. Unsupported advanced settings were ignored.'**
+  String worldBookImportSillyTavernAdjusted(int count);
+
+  /// No description provided for @worldBookImportSkippedEntries.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped {count} invalid entries.'**
+  String worldBookImportSkippedEntries(int count);
+
   /// No description provided for @worldBookNoEntriesHint.
   ///
   /// In en, this message translates to:

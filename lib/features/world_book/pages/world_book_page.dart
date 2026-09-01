@@ -19,6 +19,7 @@ import '../../../shared/widgets/snackbar.dart';
 import '../../../shared/widgets/section_card.dart';
 import '../../../theme/app_font_weights.dart';
 import 'package:Kelivo/theme/app_semantic_colors.dart';
+import '../services/world_book_import_service.dart';
 
 class WorldBookPage extends StatefulWidget {
   const WorldBookPage({super.key});
@@ -93,22 +94,6 @@ class _WorldBookPageState extends State<WorldBookPage> {
     }
   }
 
-  WorldBook? _parseWorldBookImport(dynamic decoded) {
-    try {
-      if (decoded is Map) {
-        final map = decoded.cast<String, dynamic>();
-        final data = map['data'];
-        if (data is Map) {
-          return WorldBook.fromJson(data.cast<String, dynamic>());
-        }
-        if (map.containsKey('entries')) {
-          return WorldBook.fromJson(map);
-        }
-      }
-    } catch (_) {}
-    return null;
-  }
-
   WorldBook _normalizeImportedBook(
     WorldBook book, {
     required Set<String> existingBookIds,
@@ -174,8 +159,14 @@ class _WorldBookPageState extends State<WorldBookPage> {
       return;
     }
 
-    final imported = _parseWorldBookImport(decoded);
-    if (imported == null) {
+    final importResult = WorldBookImportService.parse(
+      decoded,
+      fallbackName: file.name.replaceFirst(
+        RegExp(r'\.json$', caseSensitive: false),
+        '',
+      ),
+    );
+    if (importResult == null) {
       showAppSnackBar(
         context,
         message: l10n.assistantEditSystemPromptImportFailed,
@@ -185,10 +176,33 @@ class _WorldBookPageState extends State<WorldBookPage> {
     }
 
     final normalized = _normalizeImportedBook(
-      imported,
+      importResult.book,
       existingBookIds: provider.books.map((e) => e.id).toSet(),
     );
     await provider.addBook(normalized);
+    if (!mounted) return;
+
+    var message = importResult.format == WorldBookImportFormat.sillyTavern
+        ? (importResult.hasUnsupportedSettings
+              ? l10n.worldBookImportSillyTavernAdjusted(
+                  normalized.entries.length,
+                )
+              : l10n.worldBookImportSillyTavernSuccess(
+                  normalized.entries.length,
+                ))
+        : l10n.worldBookImportSuccess(normalized.entries.length);
+    if (importResult.skippedEntries > 0) {
+      message =
+          '$message ${l10n.worldBookImportSkippedEntries(importResult.skippedEntries)}';
+    }
+    showAppSnackBar(
+      context,
+      message: message,
+      type:
+          importResult.hasUnsupportedSettings || importResult.skippedEntries > 0
+          ? NotificationType.warning
+          : NotificationType.success,
+    );
   }
 
   String _baseName(String path) {

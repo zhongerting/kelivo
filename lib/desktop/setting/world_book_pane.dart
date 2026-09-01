@@ -13,6 +13,7 @@ import '../../icons/lucide_adapter.dart' as lucide;
 import '../../l10n/app_localizations.dart';
 import '../../shared/widgets/ios_switch.dart';
 import '../../shared/widgets/snackbar.dart';
+import '../../features/world_book/services/world_book_import_service.dart';
 import '../widgets/desktop_select_dropdown.dart';
 import '../../theme/app_font_weights.dart';
 import 'package:Kelivo/theme/app_semantic_colors.dart';
@@ -68,22 +69,6 @@ class _DesktopWorldBookPaneState extends State<DesktopWorldBookPane> {
         return null;
       }
     }
-  }
-
-  WorldBook? _parseWorldBookImport(dynamic decoded) {
-    try {
-      if (decoded is Map) {
-        final map = decoded.cast<String, dynamic>();
-        final data = map['data'];
-        if (data is Map) {
-          return WorldBook.fromJson(data.cast<String, dynamic>());
-        }
-        if (map.containsKey('entries')) {
-          return WorldBook.fromJson(map);
-        }
-      }
-    } catch (_) {}
-    return null;
   }
 
   WorldBook _normalizeImportedBook(
@@ -180,8 +165,14 @@ class _DesktopWorldBookPaneState extends State<DesktopWorldBookPane> {
       return;
     }
 
-    final imported = _parseWorldBookImport(decoded);
-    if (imported == null) {
+    final importResult = WorldBookImportService.parse(
+      decoded,
+      fallbackName: file.name.replaceFirst(
+        RegExp(r'\.json$', caseSensitive: false),
+        '',
+      ),
+    );
+    if (importResult == null) {
       showAppSnackBar(
         context,
         message: l10n.assistantEditSystemPromptImportFailed,
@@ -191,10 +182,33 @@ class _DesktopWorldBookPaneState extends State<DesktopWorldBookPane> {
     }
 
     final normalized = _normalizeImportedBook(
-      imported,
+      importResult.book,
       existingBookIds: provider.books.map((e) => e.id).toSet(),
     );
     await provider.addBook(normalized);
+    if (!mounted) return;
+
+    var message = importResult.format == WorldBookImportFormat.sillyTavern
+        ? (importResult.hasUnsupportedSettings
+              ? l10n.worldBookImportSillyTavernAdjusted(
+                  normalized.entries.length,
+                )
+              : l10n.worldBookImportSillyTavernSuccess(
+                  normalized.entries.length,
+                ))
+        : l10n.worldBookImportSuccess(normalized.entries.length);
+    if (importResult.skippedEntries > 0) {
+      message =
+          '$message ${l10n.worldBookImportSkippedEntries(importResult.skippedEntries)}';
+    }
+    showAppSnackBar(
+      context,
+      message: message,
+      type:
+          importResult.hasUnsupportedSettings || importResult.skippedEntries > 0
+          ? NotificationType.warning
+          : NotificationType.success,
+    );
   }
 
   Future<void> _exportBook(WorldBook book) async {

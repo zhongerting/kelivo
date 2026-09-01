@@ -7454,6 +7454,26 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String worldBookImportSuccess(int count) {
+    return '已导入 $count 个世界书条目';
+  }
+
+  @override
+  String worldBookImportSillyTavernSuccess(int count) {
+    return '已导入 $count 个 SillyTavern 条目';
+  }
+
+  @override
+  String worldBookImportSillyTavernAdjusted(int count) {
+    return '已导入 $count 个 SillyTavern 条目；不受支持的高级设置已忽略。';
+  }
+
+  @override
+  String worldBookImportSkippedEntries(int count) {
+    return '已跳过 $count 个无效条目。';
+  }
+
+  @override
   String get worldBookNoEntriesHint => '暂无条目';
 
   @override

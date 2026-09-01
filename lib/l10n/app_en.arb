@@ -3302,6 +3302,38 @@
       }
     }
   },
+  "worldBookImportSuccess": "Imported {count} world book entries",
+  "@worldBookImportSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "worldBookImportSillyTavernSuccess": "Imported {count} SillyTavern entries",
+  "@worldBookImportSillyTavernSuccess": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "worldBookImportSillyTavernAdjusted": "Imported {count} SillyTavern entries. Unsupported advanced settings were ignored.",
+  "@worldBookImportSillyTavernAdjusted": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "worldBookImportSkippedEntries": "Skipped {count} invalid entries.",
+  "@worldBookImportSkippedEntries": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "worldBookNoEntriesHint": "No entries",
   "worldBookUnnamedEntry": "Unnamed Entry",
   "worldBookKeywordsLine": "Keywords: {keywords}",

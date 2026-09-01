@@ -7776,6 +7776,26 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String worldBookImportSuccess(int count) {
+    return 'Imported $count world book entries';
+  }
+
+  @override
+  String worldBookImportSillyTavernSuccess(int count) {
+    return 'Imported $count SillyTavern entries';
+  }
+
+  @override
+  String worldBookImportSillyTavernAdjusted(int count) {
+    return 'Imported $count SillyTavern entries. Unsupported advanced settings were ignored.';
+  }
+
+  @override
+  String worldBookImportSkippedEntries(int count) {
+    return 'Skipped $count invalid entries.';
+  }
+
+  @override
   String get worldBookNoEntriesHint => 'No entries';
 
   @override
