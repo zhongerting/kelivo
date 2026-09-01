@@ -86,6 +86,12 @@ The focused regression test is
   `E:\devtools\kelivo-apk-build`.
 - Use JDK 17 from `E:\devtools\temurin-17\jdk-17.0.20.1+1` when the local Gradle
   environment does not select a compatible JDK automatically.
+- Locally installable Profile/Release builds currently use
+  `C:\Users\HC Zhao\.android\debug.keystore` through the ignored
+  `android/key.properties` file. Reusing this certificate lets a Release APK
+  replace the previously delivered Profile build. This is personal test
+  signing only; never commit the key configuration, and replace it with a
+  private release key before any public store distribution.
 - A normal delivery build is `flutter build apk --release`. Confirm the output
   is under `build/app/outputs/flutter-apk/` and report the exact path and file
   size to the user.
