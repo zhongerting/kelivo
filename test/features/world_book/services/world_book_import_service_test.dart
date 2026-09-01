@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:Kelivo/core/models/world_book.dart';
@@ -5,6 +8,24 @@ import 'package:Kelivo/features/world_book/services/world_book_import_service.da
 
 void main() {
   group('WorldBookImportService', () {
+    test('imports the bundled minimal SillyTavern sample', () {
+      final sample = jsonDecode(
+        File('samples/sillytavern-minimal-world-book.json').readAsStringSync(),
+      );
+      final result = WorldBookImportService.parse(
+        sample,
+        fallbackName: 'sillytavern-minimal-world-book',
+      );
+
+      expect(result, isNotNull);
+      expect(result!.format, WorldBookImportFormat.sillyTavern);
+      expect(result.hasUnsupportedSettings, isFalse);
+      expect(result.book.entries, hasLength(1));
+      expect(result.book.entries.single.name, '蓝港城');
+      expect(result.book.entries.single.keywords, ['蓝港城']);
+      expect(result.book.entries.single.content, '蓝港城是一座临海小城，城中心有一座白色灯塔。');
+    });
+
     test('keeps the existing Kelivo/RikkaHub format unchanged', () {
       final result = WorldBookImportService.parse({
         'version': 1,

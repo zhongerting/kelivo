@@ -1,0 +1,23 @@
+{
+  "entries": {
+    "0": {
+      "uid": 0,
+      "key": [
+        "蓝港城"
+      ],
+      "keysecondary": [],
+      "comment": "蓝港城",
+      "content": "蓝港城是一座临海小城，城中心有一座白色灯塔。",
+      "constant": false,
+      "selective": true,
+      "order": 100,
+      "position": 1,
+      "disable": false,
+      "addMemo": true,
+      "probability": 100,
+      "useProbability": true,
+      "depth": 4,
+      "role": 0
+    }
+  }
+}
