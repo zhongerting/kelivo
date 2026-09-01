@@ -1,0 +1,80 @@
+name: Sync upstream into custom branch
+
+on:
+  schedule:
+    # 08:23 Asia/Shanghai. GitHub may delay scheduled runs during busy periods.
+    - cron: '23 0 * * *'
+  workflow_dispatch:
+  push:
+    branches: [master]
+    paths:
+      - .github/workflows/sync-upstream.yml
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sync-upstream
+  cancel-in-progress: false
+
+env:
+  CUSTOM_BRANCH: codex/chat-instruction-shortcuts
+  FLUTTER_VERSION: '3.44.6'
+  UPSTREAM_REPOSITORY: Chevey339/kelivo
+
+jobs:
+  sync:
+    name: Sync and verify
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout fork master
+        uses: actions/checkout@v4
+        with:
+          ref: master
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git remote add upstream "https://github.com/${UPSTREAM_REPOSITORY}.git"
+
+      - name: Sync master from upstream
+        run: |
+          git fetch upstream master --tags
+          git merge --no-edit upstream/master
+          git push origin HEAD:master
+
+      - name: Merge master into custom branch
+        id: custom
+        run: |
+          git fetch origin master "${CUSTOM_BRANCH}"
+          git switch -C "${CUSTOM_BRANCH}" "origin/${CUSTOM_BRANCH}"
+          before="$(git rev-parse HEAD)"
+          git merge --no-edit origin/master
+          after="$(git rev-parse HEAD)"
+          if [ "$before" = "$after" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Flutter
+        if: steps.custom.outputs.changed == 'true'
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Verify custom functionality
+        if: steps.custom.outputs.changed == 'true'
+        run: |
+          flutter pub get
+          flutter test test/features/home/widgets/instruction_injection_sheet_test.dart
+
+      - name: Push custom branch
+        if: steps.custom.outputs.changed == 'true'
+        run: git push origin "HEAD:${CUSTOM_BRANCH}"
