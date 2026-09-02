@@ -19,7 +19,7 @@ concurrency:
 
 env:
   CUSTOM_BRANCH: codex/chat-instruction-shortcuts
-  FLUTTER_VERSION: '3.44.6'
+  FLUTTER_VERSION: '3.44.9'
   UPSTREAM_REPOSITORY: Chevey339/kelivo
 
 jobs:
