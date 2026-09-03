@@ -47,6 +47,7 @@ final class BusinessKeyRegistry {
     'assistant_tag_map_v1',
     'assistant_tag_collapsed_v1',
     'instruction_injections_active_ids_by_assistant_v1',
+    'prompt_preset_active_by_assistant_v1',
     'instruction_injection_group_collapsed_v1',
     'world_books_active_ids_by_assistant_v1',
     'world_books_collapsed_v1',
@@ -169,6 +170,7 @@ final class BusinessKeyRegistry {
     'chat_bubble_style_overrides_v1',
     'chat_bubble_style_overrides_user_v1',
     'tool_schema_overrides_v1',
+    'prompt_presets_v1',
   };
 
   static BusinessKeyDisposition classify(String key) {

@@ -11,8 +11,10 @@ import '../../../core/models/message_part.dart';
 import '../../../core/models/conversation.dart';
 import '../../../core/models/instruction_injection.dart';
 import '../../../core/models/memory_entry.dart';
+import '../../../core/models/prompt_preset.dart';
 import '../../../core/models/world_book.dart';
 import '../../../core/providers/memory_provider.dart';
+import '../../../core/providers/prompt_preset_provider.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/providers/user_provider.dart';
 import '../../../core/services/chat/chat_service.dart';
@@ -25,6 +27,7 @@ import '../../../core/services/logging/context_logger.dart';
 import '../../../core/services/memory/memory_block_builder.dart';
 import '../../../core/services/memory/memory_prompts.dart';
 import '../../../core/services/search/search_tool_service.dart';
+import '../../prompt_preset/services/prompt_preset_macro_service.dart';
 import '../../../core/providers/instruction_injection_provider.dart';
 import '../../../core/providers/world_book_provider.dart';
 import '../../../core/services/api/builtin_tools.dart';
@@ -113,6 +116,7 @@ class MessageBuilderService {
     required this.chatService,
     required this.contextProvider,
     this.chatRepository,
+    this.promptPresetProvider,
     this.ocrHandler,
     this.ocrPrefetch,
     this.providerArtifactLookup,
@@ -123,6 +127,10 @@ class MessageBuilderService {
   /// Optional override for `promptContent` freeze and §7.6 injection.
   /// When null, falls back to [ChatService.chatRepositoryOrNull].
   final ChatDatabaseRepository? chatRepository;
+
+  /// Optional provider override for tests and isolated message builders. The
+  /// app normally resolves it from [contextProvider].
+  final PromptPresetProvider? promptPresetProvider;
 
   ChatDatabaseRepository? get _repo =>
       chatRepository ?? chatService.chatRepositoryOrNull;
@@ -1770,6 +1778,81 @@ class MessageBuilderService {
         );
       }
     } catch (_) {}
+  }
+
+  /// Inject the one prompt preset selected for [assistantId].
+  ///
+  /// Presets are deliberately applied after the final context trim. Their
+  /// before/history anchor is relative to the real chat messages: leading
+  /// system messages remain first, before entries precede the first other
+  /// message, and after entries follow the existing request history.
+  Future<void> injectPromptPresetPrompts(
+    List<Map<String, dynamic>> apiMessages, {
+    required String? assistantId,
+    required String userName,
+    required String charName,
+    required String lastUserMessage,
+  }) async {
+    final provider =
+        promptPresetProvider ?? contextProvider.read<PromptPresetProvider?>();
+    if (provider == null) return;
+    await provider.initialize();
+    final preset = provider.selectedPresetFor(assistantId);
+    if (preset == null) return;
+
+    final rendered = PromptPresetMacroService.renderEnabledEntries(
+      preset.entries,
+      context: PromptPresetMacroContext(
+        userName: userName,
+        charName: charName,
+        lastUserMessage: lastUserMessage,
+      ),
+    );
+    if (rendered.isEmpty) return;
+
+    Map<String, dynamic> toMessage(PromptPresetRenderedEntry item) {
+      final message = <String, dynamic>{
+        'role': item.entry.role.toJson(),
+        'content': item.content,
+      };
+      if (ContextLogger.enabled) {
+        ContextSegmentTags.replaceWithSingle(
+          message,
+          source: ContextSource.promptPreset,
+          length: item.content.length,
+          meta: {
+            'presetId': preset.id,
+            'entryId': item.entry.id,
+            'sourceIdentifier': item.entry.sourceIdentifier,
+            'anchor': item.entry.anchor.toJson(),
+            'sourceOrder': item.entry.sourceOrder,
+          },
+        );
+      }
+      return message;
+    }
+
+    final before = rendered
+        .where(
+          (item) => item.entry.anchor == PromptPresetAnchor.beforeChatHistory,
+        )
+        .map(toMessage)
+        .toList(growable: false);
+    final after = rendered
+        .where(
+          (item) => item.entry.anchor == PromptPresetAnchor.afterChatHistory,
+        )
+        .map(toMessage)
+        .toList(growable: false);
+
+    if (before.isNotEmpty) {
+      final firstNonSystem = apiMessages.indexWhere(
+        (message) => (message['role'] ?? '').toString() != 'system',
+      );
+      final insertAt = firstNonSystem < 0 ? apiMessages.length : firstNonSystem;
+      apiMessages.insertAll(insertAt, before);
+    }
+    if (after.isNotEmpty) apiMessages.addAll(after);
   }
 
   /// Inject world book (lorebook) entries into apiMessages.

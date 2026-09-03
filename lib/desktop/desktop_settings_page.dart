@@ -55,6 +55,7 @@ import 'setting/memory_settings_pane.dart';
 import 'setting/quick_phrases_pane.dart';
 import 'setting/instruction_injection_pane.dart';
 import 'setting/world_book_pane.dart';
+import '../features/prompt_preset/pages/prompt_preset_page.dart';
 import 'setting/backup_pane.dart';
 import 'setting/hotkeys_pane.dart';
 import 'setting/network_proxy_pane.dart';
@@ -106,6 +107,7 @@ enum _SettingsMenuItem {
   quickPhrases,
   instructionInjection,
   worldBook,
+  promptPreset,
   memory,
   tts,
   networkProxy,
@@ -246,6 +248,10 @@ class _DesktopSettingsPageState extends State<DesktopSettingsPage> {
                           return const DesktopWorldBookPane(
                             key: ValueKey('worldBook'),
                           );
+                        case _SettingsMenuItem.promptPreset:
+                          return const PromptPresetManagementView(
+                            key: ValueKey('promptPreset'),
+                          );
                         case _SettingsMenuItem.memory:
                           return const DesktopMemorySettingsPane(
                             key: ValueKey('memory'),
@@ -321,6 +327,11 @@ class _SettingsMenu extends StatelessWidget {
         _SettingsMenuItem.worldBook,
         lucide.Lucide.BookOpen,
         l10n.settingsPageWorldBook,
+      ),
+      (
+        _SettingsMenuItem.promptPreset,
+        lucide.Lucide.Layers,
+        l10n.settingsPagePromptPreset,
       ),
       (_SettingsMenuItem.memory, lucide.Lucide.Brain, l10n.settingsPageMemory),
       (_SettingsMenuItem.tts, lucide.Lucide.Volume2, l10n.settingsPageTts),

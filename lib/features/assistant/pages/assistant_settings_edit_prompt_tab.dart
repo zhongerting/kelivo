@@ -902,6 +902,8 @@ class _PromptTabState extends State<_PromptTab> {
       children: [
         sysCard,
         const SizedBox(height: 12),
+        PromptPresetSelector(assistantId: widget.assistantId),
+        const SizedBox(height: 12),
         appendTimeCard,
         const SizedBox(height: 12),
         tmplCard,

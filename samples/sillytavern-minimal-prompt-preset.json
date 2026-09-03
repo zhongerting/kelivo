@@ -1,0 +1,67 @@
+{
+  "prompts": [
+    {
+      "identifier": "system-main",
+      "name": "System main",
+      "role": "SYSTEM",
+      "content": "You are {{char}}. The user is {{user}}."
+    },
+    {
+      "identifier": "chatHistory",
+      "name": "Chat history",
+      "marker": true,
+      "role": "user",
+      "content": ""
+    },
+    {
+      "identifier": "user-after-history",
+      "name": "User instruction",
+      "role": "user",
+      "content": "{{// safe comment}}Summarize {{lastUserMessage}}.{{trim}}"
+    },
+    {
+      "identifier": "assistant-after-history",
+      "name": "Assistant format",
+      "role": "assistant",
+      "injection_position": 0,
+      "content": "Use plain text."
+    },
+    {
+      "identifier": "plugin-config",
+      "name": "SPresetSettings",
+      "role": "system",
+      "content": "This configuration is never sent."
+    },
+    {
+      "identifier": "unused-entry",
+      "name": "Unused",
+      "role": "system",
+      "content": "Not listed in prompt_order."
+    }
+  ],
+  "prompt_order": [
+    {
+      "character_id": "100000",
+      "order": [
+        {"identifier": "system-main", "enabled": true}
+      ]
+    },
+    {
+      "character_id": "100001",
+      "order": [
+        {"identifier": "system-main", "enabled": false},
+        {"identifier": "chatHistory", "enabled": true},
+        {"identifier": "user-after-history", "enabled": true},
+        {"identifier": "assistant-after-history", "enabled": true},
+        {"identifier": "plugin-config", "enabled": true}
+      ]
+    }
+  ],
+  "extensions": {
+    "regex_scripts": [
+      {"find_regex": "SAFE_FIXTURE_SCRIPT", "replace_string": "never run"}
+    ],
+    "SPreset": {"RegexBinding": "never run"},
+    "tavern_helper": {"scripts": "never run"}
+  }
+}

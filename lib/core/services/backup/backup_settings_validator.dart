@@ -31,12 +31,14 @@ final class BackupSettingsValidator {
     'tts_services_v1',
     'asr_services_v1',
     'instruction_injections_v1',
+    'prompt_presets_v1',
     'assistant_tags_v1',
   };
   static const _jsonMapKeys = {
     'provider_configs_v1',
     'provider_group_map_v1',
     'provider_group_collapsed_v1',
+    'prompt_preset_active_by_assistant_v1',
     'assistant_tag_map_v1',
     'assistant_tag_collapsed_v1',
   };
@@ -44,6 +46,7 @@ final class BackupSettingsValidator {
   static const _jsonMapOfStringKeys = {
     'provider_group_map_v1',
     'assistant_tag_map_v1',
+    'prompt_preset_active_by_assistant_v1',
   };
   static const _jsonMapOfBoolKeys = {
     'provider_group_collapsed_v1',

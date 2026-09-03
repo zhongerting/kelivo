@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:provider/provider.dart';
 import 'package:flutter/widgets.dart';
 import '../../../core/models/assistant.dart';
 import '../../../core/models/chat_input_data.dart';
@@ -6,6 +7,7 @@ import '../../../core/models/chat_message.dart';
 import '../../../core/models/message_part.dart';
 import '../../../core/models/conversation.dart';
 import '../../../core/providers/settings_provider.dart';
+import '../../../core/providers/user_provider.dart';
 import '../../../core/services/api/builtin_tools.dart';
 import '../../../core/services/api/chat_api_service.dart';
 import '../../../core/services/chat/chat_service.dart';
@@ -127,6 +129,7 @@ class MessageGenerationService {
     AskUserInteractionService? askUserService,
     String? processingMessageId,
   }) async {
+    final userName = contextProvider.read<UserProvider?>()?.name ?? '';
     final cfg = settings.getProviderConfig(providerKey);
     final kind = ProviderConfig.classify(
       providerKey,
@@ -193,8 +196,16 @@ class MessageGenerationService {
 
     // Single final trim after WorldBook TOP/BOTTOM/AT_DEPTH injections. OCR and
     // document extraction must run only on this retained set so images that will
-    // not be sent are never processed (#769).
+    // not be sent are never processed (#769). Prompt presets are applied after
+    // this trim so their fixed entries are not counted as chat history.
     messageBuilderService.applyContextLimit(apiMessages, assistant);
+    await messageBuilderService.injectPromptPresetPrompts(
+      apiMessages,
+      assistantId: assistantId,
+      userName: userName,
+      charName: assistant?.name ?? '',
+      lastUserMessage: _lastRealUserMessage(messages),
+    );
 
     // Only this step does the actual attachment work (document extraction and
     // OCR), so the indicator must not cover the injection/trim passes above —
@@ -281,6 +292,13 @@ class MessageGenerationService {
       hasBuiltInSearch: hasBuiltInSearch,
       lastUserImagePaths: lastUserImagePaths,
     );
+  }
+
+  static String _lastRealUserMessage(List<ChatMessage> messages) {
+    for (final message in messages.reversed) {
+      if (message.role == 'user') return message.content;
+    }
+    return '';
   }
 
   /// Create user message from input data.

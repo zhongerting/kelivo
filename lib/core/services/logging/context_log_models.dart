@@ -13,6 +13,7 @@ enum ContextSource {
   searchPrompt,
   instructionInjection,
   worldBook,
+  promptPreset,
   memorySnapshot,
   chatHistory,
   toolCall,

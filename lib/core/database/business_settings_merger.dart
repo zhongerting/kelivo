@@ -13,11 +13,15 @@ final class BusinessSettingsMerger {
   static const _asrServicesKey = 'asr_services_v1';
   static const _providerOrderKey = 'providers_order_v1';
   static const _pinnedModelsKey = 'pinned_models_v1';
+  static const _promptPresetsKey = 'prompt_presets_v1';
+  static const _promptPresetActiveByAssistantKey =
+      'prompt_preset_active_by_assistant_v1';
   static const _relationshipMapKeys = <String>{
     'provider_group_map_v1',
     'provider_group_collapsed_v1',
     'assistant_tag_map_v1',
     'assistant_tag_collapsed_v1',
+    _promptPresetActiveByAssistantKey,
   };
 
   static Map<String, Object> merge(
@@ -130,6 +134,12 @@ final class BusinessSettingsMerger {
           key,
         );
       } else if (key == _asrServicesKey) {
+        preferences[key] = _mergeJsonObjectListsByIdPreferExisting(
+          preferences[key] as String?,
+          imported as String,
+          key,
+        );
+      } else if (key == _promptPresetsKey) {
         preferences[key] = _mergeJsonObjectListsByIdPreferExisting(
           preferences[key] as String?,
           imported as String,

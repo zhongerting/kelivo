@@ -16116,6 +16116,292 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cancel'**
   String get toolSchemaSettingsCancel;
+
+  /// No description provided for @settingsPagePromptPreset.
+  ///
+  /// In en, this message translates to:
+  /// **'Prompt Presets'**
+  String get settingsPagePromptPreset;
+
+  /// No description provided for @promptPresetTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Prompt Presets'**
+  String get promptPresetTitle;
+
+  /// No description provided for @promptPresetSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import and manage reusable prompts for assistants.'**
+  String get promptPresetSubtitle;
+
+  /// No description provided for @promptPresetImportTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Import SillyTavern JSON'**
+  String get promptPresetImportTooltip;
+
+  /// No description provided for @promptPresetAddTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Add prompt preset'**
+  String get promptPresetAddTooltip;
+
+  /// No description provided for @promptPresetEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No prompt presets'**
+  String get promptPresetEmpty;
+
+  /// No description provided for @promptPresetUnnamed.
+  ///
+  /// In en, this message translates to:
+  /// **'Unnamed preset'**
+  String get promptPresetUnnamed;
+
+  /// No description provided for @promptPresetEntryCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} entries'**
+  String promptPresetEntryCount(int count);
+
+  /// No description provided for @promptPresetEnabledCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} enabled'**
+  String promptPresetEnabledCount(int count);
+
+  /// No description provided for @promptPresetNoEntries.
+  ///
+  /// In en, this message translates to:
+  /// **'This preset has no prompt entries.'**
+  String get promptPresetNoEntries;
+
+  /// No description provided for @promptPresetExpand.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand preset'**
+  String get promptPresetExpand;
+
+  /// No description provided for @promptPresetCollapse.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse preset'**
+  String get promptPresetCollapse;
+
+  /// No description provided for @promptPresetEditName.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename preset'**
+  String get promptPresetEditName;
+
+  /// No description provided for @promptPresetDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete preset'**
+  String get promptPresetDelete;
+
+  /// No description provided for @promptPresetDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete prompt preset?'**
+  String get promptPresetDeleteTitle;
+
+  /// No description provided for @promptPresetDeleteMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {name}? Its assistant bindings will also be cleared.'**
+  String promptPresetDeleteMessage(String name);
+
+  /// No description provided for @promptPresetAddTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add prompt preset'**
+  String get promptPresetAddTitle;
+
+  /// No description provided for @promptPresetNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Preset name'**
+  String get promptPresetNameHint;
+
+  /// No description provided for @promptPresetAddEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Add prompt entry'**
+  String get promptPresetAddEntry;
+
+  /// No description provided for @promptPresetEditEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit prompt entry'**
+  String get promptPresetEditEntry;
+
+  /// No description provided for @promptPresetEntryName.
+  ///
+  /// In en, this message translates to:
+  /// **'Entry name'**
+  String get promptPresetEntryName;
+
+  /// No description provided for @promptPresetEntryNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Optional display name'**
+  String get promptPresetEntryNameHint;
+
+  /// No description provided for @promptPresetEntryContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Prompt content'**
+  String get promptPresetEntryContent;
+
+  /// No description provided for @promptPresetEntryContentHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Text sent to the model'**
+  String get promptPresetEntryContentHint;
+
+  /// No description provided for @promptPresetEntryEnabled.
+  ///
+  /// In en, this message translates to:
+  /// **'Prompt entry enabled'**
+  String get promptPresetEntryEnabled;
+
+  /// No description provided for @promptPresetRole.
+  ///
+  /// In en, this message translates to:
+  /// **'Role'**
+  String get promptPresetRole;
+
+  /// No description provided for @promptPresetRoleSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get promptPresetRoleSystem;
+
+  /// No description provided for @promptPresetRoleUser.
+  ///
+  /// In en, this message translates to:
+  /// **'User'**
+  String get promptPresetRoleUser;
+
+  /// No description provided for @promptPresetRoleAssistant.
+  ///
+  /// In en, this message translates to:
+  /// **'Assistant'**
+  String get promptPresetRoleAssistant;
+
+  /// No description provided for @promptPresetAnchor.
+  ///
+  /// In en, this message translates to:
+  /// **'Position'**
+  String get promptPresetAnchor;
+
+  /// No description provided for @promptPresetAnchorBeforeChatHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'Before chat history'**
+  String get promptPresetAnchorBeforeChatHistory;
+
+  /// No description provided for @promptPresetAnchorAfterChatHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'After chat history'**
+  String get promptPresetAnchorAfterChatHistory;
+
+  /// No description provided for @promptPresetCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get promptPresetCancel;
+
+  /// No description provided for @promptPresetSave.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get promptPresetSave;
+
+  /// No description provided for @promptPresetImportReportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Prompt preset import report'**
+  String get promptPresetImportReportTitle;
+
+  /// No description provided for @promptPresetImportReportFile.
+  ///
+  /// In en, this message translates to:
+  /// **'File: {fileName}'**
+  String promptPresetImportReportFile(String fileName);
+
+  /// No description provided for @promptPresetImportInvalidJson.
+  ///
+  /// In en, this message translates to:
+  /// **'The file could not be imported.'**
+  String get promptPresetImportInvalidJson;
+
+  /// No description provided for @promptPresetImportReportSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported {imported} entries: {enabled} enabled, {disabled} disabled.'**
+  String promptPresetImportReportSummary(
+    int imported,
+    int enabled,
+    int disabled,
+  );
+
+  /// No description provided for @promptPresetImportReportSkipped.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped {markers} markers and {entries} other entries.'**
+  String promptPresetImportReportSkipped(int markers, int entries);
+
+  /// No description provided for @promptPresetImportReportSkippedPlugins.
+  ///
+  /// In en, this message translates to:
+  /// **'Skipped {count} plugin configuration entries.'**
+  String promptPresetImportReportSkippedPlugins(int count);
+
+  /// No description provided for @promptPresetUnsupportedMacros.
+  ///
+  /// In en, this message translates to:
+  /// **'Unsupported macros kept as text: {names}'**
+  String promptPresetUnsupportedMacros(String names);
+
+  /// No description provided for @promptPresetNoPreset.
+  ///
+  /// In en, this message translates to:
+  /// **'Do not use a prompt preset'**
+  String get promptPresetNoPreset;
+
+  /// No description provided for @promptPresetSelectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Prompt preset'**
+  String get promptPresetSelectionTitle;
+
+  /// No description provided for @promptPresetSelectionNoneSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No reusable prompt preset is selected.'**
+  String get promptPresetSelectionNoneSubtitle;
+
+  /// No description provided for @promptPresetSelectionSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} enabled entries'**
+  String promptPresetSelectionSummary(int count);
+
+  /// No description provided for @promptPresetSelectionManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage prompt presets'**
+  String get promptPresetSelectionManage;
+
+  /// No description provided for @contextLogSourcePromptPreset.
+  ///
+  /// In en, this message translates to:
+  /// **'Prompt preset'**
+  String get contextLogSourcePromptPreset;
 }
 
 class _AppLocalizationsDelegate

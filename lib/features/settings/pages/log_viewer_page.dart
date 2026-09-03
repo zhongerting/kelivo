@@ -2015,6 +2015,8 @@ Color _contextSourceColor(BuildContext context, ContextSource source) {
       return cs.tertiary;
     case ContextSource.worldBook:
       return colors.success;
+    case ContextSource.promptPreset:
+      return cs.primaryContainer;
     case ContextSource.instructionInjection:
       return colors.warning;
     case ContextSource.searchPrompt:
@@ -2039,6 +2041,8 @@ String _contextSourceLabel(AppLocalizations l10n, ContextSource source) {
       return l10n.contextLogSourceInstructionInjection;
     case ContextSource.worldBook:
       return l10n.contextLogSourceWorldBook;
+    case ContextSource.promptPreset:
+      return l10n.contextLogSourcePromptPreset;
     case ContextSource.memorySnapshot:
       return l10n.contextLogSourceMemorySnapshot;
     case ContextSource.chatHistory:

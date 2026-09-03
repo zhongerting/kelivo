@@ -8968,4 +8968,169 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get toolSchemaSettingsCancel => 'Cancel';
+
+  @override
+  String get settingsPagePromptPreset => 'Prompt Presets';
+
+  @override
+  String get promptPresetTitle => 'Prompt Presets';
+
+  @override
+  String get promptPresetSubtitle =>
+      'Import and manage reusable prompts for assistants.';
+
+  @override
+  String get promptPresetImportTooltip => 'Import SillyTavern JSON';
+
+  @override
+  String get promptPresetAddTooltip => 'Add prompt preset';
+
+  @override
+  String get promptPresetEmpty => 'No prompt presets';
+
+  @override
+  String get promptPresetUnnamed => 'Unnamed preset';
+
+  @override
+  String promptPresetEntryCount(int count) {
+    return '$count entries';
+  }
+
+  @override
+  String promptPresetEnabledCount(int count) {
+    return '$count enabled';
+  }
+
+  @override
+  String get promptPresetNoEntries => 'This preset has no prompt entries.';
+
+  @override
+  String get promptPresetExpand => 'Expand preset';
+
+  @override
+  String get promptPresetCollapse => 'Collapse preset';
+
+  @override
+  String get promptPresetEditName => 'Rename preset';
+
+  @override
+  String get promptPresetDelete => 'Delete preset';
+
+  @override
+  String get promptPresetDeleteTitle => 'Delete prompt preset?';
+
+  @override
+  String promptPresetDeleteMessage(String name) {
+    return 'Delete $name? Its assistant bindings will also be cleared.';
+  }
+
+  @override
+  String get promptPresetAddTitle => 'Add prompt preset';
+
+  @override
+  String get promptPresetNameHint => 'Preset name';
+
+  @override
+  String get promptPresetAddEntry => 'Add prompt entry';
+
+  @override
+  String get promptPresetEditEntry => 'Edit prompt entry';
+
+  @override
+  String get promptPresetEntryName => 'Entry name';
+
+  @override
+  String get promptPresetEntryNameHint => 'Optional display name';
+
+  @override
+  String get promptPresetEntryContent => 'Prompt content';
+
+  @override
+  String get promptPresetEntryContentHint => 'Text sent to the model';
+
+  @override
+  String get promptPresetEntryEnabled => 'Prompt entry enabled';
+
+  @override
+  String get promptPresetRole => 'Role';
+
+  @override
+  String get promptPresetRoleSystem => 'System';
+
+  @override
+  String get promptPresetRoleUser => 'User';
+
+  @override
+  String get promptPresetRoleAssistant => 'Assistant';
+
+  @override
+  String get promptPresetAnchor => 'Position';
+
+  @override
+  String get promptPresetAnchorBeforeChatHistory => 'Before chat history';
+
+  @override
+  String get promptPresetAnchorAfterChatHistory => 'After chat history';
+
+  @override
+  String get promptPresetCancel => 'Cancel';
+
+  @override
+  String get promptPresetSave => 'Save';
+
+  @override
+  String get promptPresetImportReportTitle => 'Prompt preset import report';
+
+  @override
+  String promptPresetImportReportFile(String fileName) {
+    return 'File: $fileName';
+  }
+
+  @override
+  String get promptPresetImportInvalidJson => 'The file could not be imported.';
+
+  @override
+  String promptPresetImportReportSummary(
+    int imported,
+    int enabled,
+    int disabled,
+  ) {
+    return 'Imported $imported entries: $enabled enabled, $disabled disabled.';
+  }
+
+  @override
+  String promptPresetImportReportSkipped(int markers, int entries) {
+    return 'Skipped $markers markers and $entries other entries.';
+  }
+
+  @override
+  String promptPresetImportReportSkippedPlugins(int count) {
+    return 'Skipped $count plugin configuration entries.';
+  }
+
+  @override
+  String promptPresetUnsupportedMacros(String names) {
+    return 'Unsupported macros kept as text: $names';
+  }
+
+  @override
+  String get promptPresetNoPreset => 'Do not use a prompt preset';
+
+  @override
+  String get promptPresetSelectionTitle => 'Prompt preset';
+
+  @override
+  String get promptPresetSelectionNoneSubtitle =>
+      'No reusable prompt preset is selected.';
+
+  @override
+  String promptPresetSelectionSummary(int count) {
+    return '$count enabled entries';
+  }
+
+  @override
+  String get promptPresetSelectionManage => 'Manage prompt presets';
+
+  @override
+  String get contextLogSourcePromptPreset => 'Prompt preset';
 }

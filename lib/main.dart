@@ -32,6 +32,7 @@ import 'core/providers/quick_phrase_provider.dart';
 import 'core/providers/instruction_injection_provider.dart';
 import 'core/providers/instruction_injection_group_provider.dart';
 import 'core/providers/world_book_provider.dart';
+import 'core/providers/prompt_preset_provider.dart';
 import 'core/providers/memory_provider.dart';
 import 'core/providers/memory_provider_v2.dart';
 import 'core/providers/backup_provider.dart';
@@ -612,6 +613,9 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(
           create: (_) => WorldBookProvider(preferences: businessPreferences),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => PromptPresetProvider(preferences: businessPreferences),
         ),
         ChangeNotifierProvider(
           create: (_) => MemoryProvider(preferences: businessPreferences),

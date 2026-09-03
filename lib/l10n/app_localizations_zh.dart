@@ -8573,6 +8573,169 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get toolSchemaSettingsCancel => '取消';
+
+  @override
+  String get settingsPagePromptPreset => '提示词预设';
+
+  @override
+  String get promptPresetTitle => '提示词预设';
+
+  @override
+  String get promptPresetSubtitle => '导入和管理助手可复用的提示词。';
+
+  @override
+  String get promptPresetImportTooltip => '导入 SillyTavern JSON';
+
+  @override
+  String get promptPresetAddTooltip => '添加提示词预设';
+
+  @override
+  String get promptPresetEmpty => '还没有提示词预设';
+
+  @override
+  String get promptPresetUnnamed => '未命名预设';
+
+  @override
+  String promptPresetEntryCount(int count) {
+    return '$count 条提示词';
+  }
+
+  @override
+  String promptPresetEnabledCount(int count) {
+    return '$count 条已开启';
+  }
+
+  @override
+  String get promptPresetNoEntries => '这个预设还没有提示词条目。';
+
+  @override
+  String get promptPresetExpand => '展开预设';
+
+  @override
+  String get promptPresetCollapse => '收起预设';
+
+  @override
+  String get promptPresetEditName => '重命名预设';
+
+  @override
+  String get promptPresetDelete => '删除预设';
+
+  @override
+  String get promptPresetDeleteTitle => '删除提示词预设？';
+
+  @override
+  String promptPresetDeleteMessage(String name) {
+    return '删除“$name”？绑定它的助手也会解除选择。';
+  }
+
+  @override
+  String get promptPresetAddTitle => '添加提示词预设';
+
+  @override
+  String get promptPresetNameHint => '预设名称';
+
+  @override
+  String get promptPresetAddEntry => '添加提示词条目';
+
+  @override
+  String get promptPresetEditEntry => '编辑提示词条目';
+
+  @override
+  String get promptPresetEntryName => '条目名称';
+
+  @override
+  String get promptPresetEntryNameHint => '可选的显示名称';
+
+  @override
+  String get promptPresetEntryContent => '提示词正文';
+
+  @override
+  String get promptPresetEntryContentHint => '发送给模型的文本';
+
+  @override
+  String get promptPresetEntryEnabled => '启用提示词条目';
+
+  @override
+  String get promptPresetRole => '角色';
+
+  @override
+  String get promptPresetRoleSystem => '系统';
+
+  @override
+  String get promptPresetRoleUser => '用户';
+
+  @override
+  String get promptPresetRoleAssistant => '助手';
+
+  @override
+  String get promptPresetAnchor => '位置';
+
+  @override
+  String get promptPresetAnchorBeforeChatHistory => '聊天记录之前';
+
+  @override
+  String get promptPresetAnchorAfterChatHistory => '聊天记录之后';
+
+  @override
+  String get promptPresetCancel => '取消';
+
+  @override
+  String get promptPresetSave => '保存';
+
+  @override
+  String get promptPresetImportReportTitle => '提示词预设导入报告';
+
+  @override
+  String promptPresetImportReportFile(String fileName) {
+    return '文件：$fileName';
+  }
+
+  @override
+  String get promptPresetImportInvalidJson => '无法导入这个文件。';
+
+  @override
+  String promptPresetImportReportSummary(
+    int imported,
+    int enabled,
+    int disabled,
+  ) {
+    return '导入 $imported 条：开启 $enabled 条，关闭 $disabled 条。';
+  }
+
+  @override
+  String promptPresetImportReportSkipped(int markers, int entries) {
+    return '跳过 $markers 个 marker 和 $entries 个其他条目。';
+  }
+
+  @override
+  String promptPresetImportReportSkippedPlugins(int count) {
+    return '跳过 $count 个插件配置条目。';
+  }
+
+  @override
+  String promptPresetUnsupportedMacros(String names) {
+    return '未支持的宏保留为文本：$names';
+  }
+
+  @override
+  String get promptPresetNoPreset => '不使用提示词预设';
+
+  @override
+  String get promptPresetSelectionTitle => '提示词预设';
+
+  @override
+  String get promptPresetSelectionNoneSubtitle => '没有选择可复用的提示词预设。';
+
+  @override
+  String promptPresetSelectionSummary(int count) {
+    return '$count 条已开启';
+  }
+
+  @override
+  String get promptPresetSelectionManage => '管理提示词预设';
+
+  @override
+  String get contextLogSourcePromptPreset => '提示词预设';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -17047,6 +17210,169 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get toolSchemaSettingsCancel => '取消';
+
+  @override
+  String get settingsPagePromptPreset => '提示词预设';
+
+  @override
+  String get promptPresetTitle => '提示词预设';
+
+  @override
+  String get promptPresetSubtitle => '导入和管理助手可复用的提示词。';
+
+  @override
+  String get promptPresetImportTooltip => '导入 SillyTavern JSON';
+
+  @override
+  String get promptPresetAddTooltip => '添加提示词预设';
+
+  @override
+  String get promptPresetEmpty => '还没有提示词预设';
+
+  @override
+  String get promptPresetUnnamed => '未命名预设';
+
+  @override
+  String promptPresetEntryCount(int count) {
+    return '$count 条提示词';
+  }
+
+  @override
+  String promptPresetEnabledCount(int count) {
+    return '$count 条已开启';
+  }
+
+  @override
+  String get promptPresetNoEntries => '这个预设还没有提示词条目。';
+
+  @override
+  String get promptPresetExpand => '展开预设';
+
+  @override
+  String get promptPresetCollapse => '收起预设';
+
+  @override
+  String get promptPresetEditName => '重命名预设';
+
+  @override
+  String get promptPresetDelete => '删除预设';
+
+  @override
+  String get promptPresetDeleteTitle => '删除提示词预设？';
+
+  @override
+  String promptPresetDeleteMessage(String name) {
+    return '删除“$name”？绑定它的助手也会解除选择。';
+  }
+
+  @override
+  String get promptPresetAddTitle => '添加提示词预设';
+
+  @override
+  String get promptPresetNameHint => '预设名称';
+
+  @override
+  String get promptPresetAddEntry => '添加提示词条目';
+
+  @override
+  String get promptPresetEditEntry => '编辑提示词条目';
+
+  @override
+  String get promptPresetEntryName => '条目名称';
+
+  @override
+  String get promptPresetEntryNameHint => '可选的显示名称';
+
+  @override
+  String get promptPresetEntryContent => '提示词正文';
+
+  @override
+  String get promptPresetEntryContentHint => '发送给模型的文本';
+
+  @override
+  String get promptPresetEntryEnabled => '启用提示词条目';
+
+  @override
+  String get promptPresetRole => '角色';
+
+  @override
+  String get promptPresetRoleSystem => '系统';
+
+  @override
+  String get promptPresetRoleUser => '用户';
+
+  @override
+  String get promptPresetRoleAssistant => '助手';
+
+  @override
+  String get promptPresetAnchor => '位置';
+
+  @override
+  String get promptPresetAnchorBeforeChatHistory => '聊天记录之前';
+
+  @override
+  String get promptPresetAnchorAfterChatHistory => '聊天记录之后';
+
+  @override
+  String get promptPresetCancel => '取消';
+
+  @override
+  String get promptPresetSave => '保存';
+
+  @override
+  String get promptPresetImportReportTitle => '提示词预设导入报告';
+
+  @override
+  String promptPresetImportReportFile(String fileName) {
+    return '文件：$fileName';
+  }
+
+  @override
+  String get promptPresetImportInvalidJson => '无法导入这个文件。';
+
+  @override
+  String promptPresetImportReportSummary(
+    int imported,
+    int enabled,
+    int disabled,
+  ) {
+    return '导入 $imported 条：开启 $enabled 条，关闭 $disabled 条。';
+  }
+
+  @override
+  String promptPresetImportReportSkipped(int markers, int entries) {
+    return '跳过 $markers 个 marker 和 $entries 个其他条目。';
+  }
+
+  @override
+  String promptPresetImportReportSkippedPlugins(int count) {
+    return '跳过 $count 个插件配置条目。';
+  }
+
+  @override
+  String promptPresetUnsupportedMacros(String names) {
+    return '未支持的宏保留为文本：$names';
+  }
+
+  @override
+  String get promptPresetNoPreset => '不使用提示词预设';
+
+  @override
+  String get promptPresetSelectionTitle => '提示词预设';
+
+  @override
+  String get promptPresetSelectionNoneSubtitle => '没有选择可复用的提示词预设。';
+
+  @override
+  String promptPresetSelectionSummary(int count) {
+    return '$count 条已开启';
+  }
+
+  @override
+  String get promptPresetSelectionManage => '管理提示词预设';
+
+  @override
+  String get contextLogSourcePromptPreset => '提示词预设';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -25595,4 +25921,167 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get toolSchemaSettingsCancel => '取消';
+
+  @override
+  String get settingsPagePromptPreset => '提示詞預設';
+
+  @override
+  String get promptPresetTitle => '提示詞預設';
+
+  @override
+  String get promptPresetSubtitle => '匯入和管理助手可重複使用的提示詞。';
+
+  @override
+  String get promptPresetImportTooltip => '匯入 SillyTavern JSON';
+
+  @override
+  String get promptPresetAddTooltip => '新增提示詞預設';
+
+  @override
+  String get promptPresetEmpty => '還沒有提示詞預設';
+
+  @override
+  String get promptPresetUnnamed => '未命名預設';
+
+  @override
+  String promptPresetEntryCount(int count) {
+    return '$count 條提示詞';
+  }
+
+  @override
+  String promptPresetEnabledCount(int count) {
+    return '$count 條已開啟';
+  }
+
+  @override
+  String get promptPresetNoEntries => '這個預設還沒有提示詞條目。';
+
+  @override
+  String get promptPresetExpand => '展開預設';
+
+  @override
+  String get promptPresetCollapse => '收起預設';
+
+  @override
+  String get promptPresetEditName => '重新命名預設';
+
+  @override
+  String get promptPresetDelete => '刪除預設';
+
+  @override
+  String get promptPresetDeleteTitle => '刪除提示詞預設？';
+
+  @override
+  String promptPresetDeleteMessage(String name) {
+    return '刪除「$name」？綁定它的助手也會解除選擇。';
+  }
+
+  @override
+  String get promptPresetAddTitle => '新增提示詞預設';
+
+  @override
+  String get promptPresetNameHint => '預設名稱';
+
+  @override
+  String get promptPresetAddEntry => '新增提示詞條目';
+
+  @override
+  String get promptPresetEditEntry => '編輯提示詞條目';
+
+  @override
+  String get promptPresetEntryName => '條目名稱';
+
+  @override
+  String get promptPresetEntryNameHint => '可選的顯示名稱';
+
+  @override
+  String get promptPresetEntryContent => '提示詞正文';
+
+  @override
+  String get promptPresetEntryContentHint => '傳送給模型的文字';
+
+  @override
+  String get promptPresetEntryEnabled => '啟用提示詞條目';
+
+  @override
+  String get promptPresetRole => '角色';
+
+  @override
+  String get promptPresetRoleSystem => '系統';
+
+  @override
+  String get promptPresetRoleUser => '使用者';
+
+  @override
+  String get promptPresetRoleAssistant => '助手';
+
+  @override
+  String get promptPresetAnchor => '位置';
+
+  @override
+  String get promptPresetAnchorBeforeChatHistory => '聊天記錄之前';
+
+  @override
+  String get promptPresetAnchorAfterChatHistory => '聊天記錄之後';
+
+  @override
+  String get promptPresetCancel => '取消';
+
+  @override
+  String get promptPresetSave => '儲存';
+
+  @override
+  String get promptPresetImportReportTitle => '提示詞預設匯入報告';
+
+  @override
+  String promptPresetImportReportFile(String fileName) {
+    return '檔案：$fileName';
+  }
+
+  @override
+  String get promptPresetImportInvalidJson => '無法匯入這個檔案。';
+
+  @override
+  String promptPresetImportReportSummary(
+    int imported,
+    int enabled,
+    int disabled,
+  ) {
+    return '匯入 $imported 條：開啟 $enabled 條，關閉 $disabled 條。';
+  }
+
+  @override
+  String promptPresetImportReportSkipped(int markers, int entries) {
+    return '跳過 $markers 個 marker 和 $entries 個其他條目。';
+  }
+
+  @override
+  String promptPresetImportReportSkippedPlugins(int count) {
+    return '跳過 $count 個外掛設定條目。';
+  }
+
+  @override
+  String promptPresetUnsupportedMacros(String names) {
+    return '未支援的巨集保留為文字：$names';
+  }
+
+  @override
+  String get promptPresetNoPreset => '不使用提示詞預設';
+
+  @override
+  String get promptPresetSelectionTitle => '提示詞預設';
+
+  @override
+  String get promptPresetSelectionNoneSubtitle => '沒有選擇可重複使用的提示詞預設。';
+
+  @override
+  String promptPresetSelectionSummary(int count) {
+    return '$count 條已開啟';
+  }
+
+  @override
+  String get promptPresetSelectionManage => '管理提示詞預設';
+
+  @override
+  String get contextLogSourcePromptPreset => '提示詞預設';
 }
