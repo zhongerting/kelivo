@@ -6214,6 +6214,18 @@ abstract class AppLocalizations {
   /// **'Global default chat model'**
   String get defaultModelPageChatModelSubtitle;
 
+  /// No description provided for @defaultModelPagePerChatModelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Per-Chat Model'**
+  String get defaultModelPagePerChatModelTitle;
+
+  /// No description provided for @defaultModelPagePerChatModelSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'On: picking a model in a chat applies to that chat only. Off: it becomes the current assistant\'s model, so every chat using that assistant follows it.'**
+  String get defaultModelPagePerChatModelSubtitle;
+
   /// No description provided for @defaultModelPageTitleModelTitle.
   ///
   /// In en, this message translates to:
@@ -11956,7 +11968,7 @@ abstract class AppLocalizations {
   /// No description provided for @autoRetryFooter.
   ///
   /// In en, this message translates to:
-  /// **'Auto-retry only runs if this request has not produced any output yet.'**
+  /// **'Auto-retry only runs if the current model response has not produced any output yet.'**
   String get autoRetryFooter;
 
   /// No description provided for @autoRetryCountdown.
