@@ -245,6 +245,39 @@ void main() {
       expect(en, contains('User: '));
       expect(en, contains('Assistant: '));
     });
+
+    test(
+      'gatekeeper and extractor text filters completed assistant thinking',
+      () {
+        const filteringAssistant = Assistant(
+          id: 'a1',
+          name: 'A1',
+          excludeThinkingFromContext: true,
+        );
+        final msgs = [
+          ChatMessage(role: 'user', content: 'question', conversationId: 'c'),
+          ChatMessage(
+            role: 'assistant',
+            content: '<think>private memory trigger</think>visible reply',
+            conversationId: 'c',
+          ),
+          ChatMessage(
+            role: 'assistant',
+            content: '<thinking>private only</thinking>',
+            conversationId: 'c',
+          ),
+        ];
+
+        final text = MemoryPipelineService.buildConversationText(
+          msgs,
+          MemoryPromptLang.en,
+          assistant: filteringAssistant,
+        );
+
+        expect(text, 'User: question\n\nAssistant: visible reply');
+        expect(text, isNot(contains('private')));
+      },
+    );
   });
 
   group('temporary conversations', () {
@@ -469,6 +502,64 @@ void main() {
       expect(seen, startsWith('OVERRIDE-GATE '));
       expect(seen, isNot(contains(MemoryPrompts.gateZh.substring(0, 8))));
     });
+
+    test(
+      'filters gatekeeper and extractor prompts while watermark uses raw order',
+      () async {
+        await seedAssistant('a1');
+        final convo = await chatService.createConversation(
+          title: 't',
+          assistantId: 'a1',
+        );
+        const filteringAssistant = Assistant(
+          id: 'a1',
+          name: 'A1',
+          excludeThinkingFromContext: true,
+        );
+        final window = [
+          (
+            message: ChatMessage(
+              role: 'user',
+              content: 'question',
+              conversationId: convo.id,
+            ),
+            order: 0,
+          ),
+          (
+            message: ChatMessage(
+              role: 'assistant',
+              content: '<think>private memory trigger</think>visible reply',
+              conversationId: convo.id,
+            ),
+            order: 1,
+          ),
+        ];
+        final prompts = <String>[];
+
+        final result = await pipeline.processWindow(
+          conversationId: convo.id,
+          assistant: filteringAssistant,
+          settings: settings,
+          watermark: -1,
+          window: window,
+          llmCall: (prompt) async {
+            prompts.add(prompt);
+            if (prompts.length == 1) {
+              return '<gate><user_memory>true</user_memory></gate>';
+            }
+            return '<extracted></extracted>';
+          },
+        );
+
+        expect(result.advanced, isTrue);
+        expect(convo.lastMemoryExtractedOrder, 1);
+        expect(prompts, hasLength(2));
+        for (final prompt in prompts) {
+          expect(prompt, contains('visible reply'));
+          expect(prompt, isNot(contains('private memory trigger')));
+        }
+      },
+    );
   });
 
   group('Distiller parse malformed fails cleanly', () {

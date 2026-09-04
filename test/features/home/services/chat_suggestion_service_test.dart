@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import 'package:Kelivo/core/models/assistant.dart';
 import 'package:Kelivo/core/models/chat_message.dart';
 import 'package:Kelivo/features/home/services/chat_suggestion_service.dart';
 
@@ -80,6 +81,30 @@ void main() {
 
       expect(content, contains('message 89'));
       expect(content, contains('message 99'));
+    });
+
+    test('建议 prompt 使用过滤后的 assistant 正文', () {
+      const assistant = Assistant(
+        id: 'rp-1',
+        name: 'RP',
+        excludeThinkingFromContext: true,
+      );
+      final content = ChatSuggestionService.buildContent(
+        [
+          _suggestionMessage(0, 'question'),
+          _suggestionMessage(
+            1,
+            '<think>private suggestion trigger</think>visible answer',
+          ),
+          _suggestionMessage(3, '<think>private only</think>'),
+        ],
+        maxMessages: 8,
+        assistant: assistant,
+      );
+
+      expect(content, contains('Assistant: visible answer'));
+      expect(content, isNot(contains('private')));
+      expect(content, isNot(contains('Assistant: \n')));
     });
   });
 }

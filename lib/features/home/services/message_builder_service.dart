@@ -27,8 +27,8 @@ import '../../../core/services/logging/context_logger.dart';
 import '../../../core/services/memory/memory_block_builder.dart';
 import '../../../core/services/memory/memory_prompts.dart';
 import '../../../core/services/search/search_tool_service.dart';
+import '../../../core/utils/model_visible_history.dart';
 import '../../character_card/services/character_card_macro_service.dart';
-import '../../chat/utils/thinking_tag_parser.dart';
 import '../../prompt_preset/services/prompt_preset_macro_service.dart';
 import '../../../core/providers/instruction_injection_provider.dart';
 import '../../../core/providers/world_book_provider.dart';
@@ -427,10 +427,10 @@ class MessageBuilderService {
 
       final rawContent = message['content'];
       if (rawContent is! String || rawContent.isEmpty) continue;
-      final parsed = ThinkingTagParser.parseWithRanges(rawContent);
-      if (!parsed.hasThinking) continue;
+      final parsed = ModelVisibleHistory.visibleText(rawContent);
+      if (parsed == rawContent) continue;
 
-      final visible = parsed.visibleContent;
+      final visible = parsed;
       message['content'] = visible;
       if (ContextLogger.enabled) {
         ContextSegmentTags.replaceWithSingle(

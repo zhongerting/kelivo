@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../../../core/services/chat/chat_service.dart';
 import '../../../core/services/api/chat_api_service.dart';
 import '../../../core/services/logging/flutter_logger.dart';
+import '../../../core/utils/model_visible_history.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/providers/backup_reminder_provider.dart';
 import '../../../core/models/chat_item.dart';
@@ -50,7 +51,6 @@ import 'dart:async';
 import '../../../features/search/services/global_session_search_service.dart';
 import '../controllers/chat_actions.dart';
 import '../utils/model_display_helper.dart';
-import '../../chat/utils/thinking_tag_parser.dart';
 import 'assistant_avatar.dart';
 import 'assistant_entry_actions.dart';
 import 'sidebar_selection_bars.dart';
@@ -947,13 +947,7 @@ class _SideDrawerState extends State<SideDrawer> with TickerProviderStateMixin {
       // applies truncateIndex and collapses multi-version groups)
       final content = await chatService.generateTitleSource(
         conversationId,
-        contentTransform: assistant?.excludeThinkingFromContext == true
-            ? (message) => message.role == 'assistant'
-                  ? ThinkingTagParser.parseWithRanges(
-                      message.content,
-                    ).visibleContent
-                  : message.content
-            : null,
+        contentTransform: ModelVisibleHistory.transformFor(assistant),
       );
       final prompt = settings.titlePrompt
           .replaceAll('{locale}', locale)

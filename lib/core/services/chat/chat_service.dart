@@ -1316,11 +1316,16 @@ class ChatService extends ChangeNotifier {
       final start = (truncateIndex >= 0 && truncateIndex <= selected.length)
           ? truncateIndex
           : 0;
-      source = _titleSourceTailWindow(selected, start);
+      source = _titleSourceTailWindow(
+        selected,
+        start,
+        contentTransform: contentTransform,
+      );
     } else {
       source = await _loadTitleSourceTail(
         conversationId,
         truncateIndex: truncateIndex,
+        contentTransform: contentTransform,
       );
     }
 
@@ -1341,6 +1346,7 @@ class ChatService extends ChangeNotifier {
   Future<List<ChatMessage>> _loadTitleSourceTail(
     String conversationId, {
     required int truncateIndex,
+    String Function(ChatMessage message)? contentTransform,
   }) async {
     final selected = <ChatMessage>[];
     var chars = 0;
@@ -1359,8 +1365,11 @@ class ChatService extends ChangeNotifier {
       for (var i = page.slots.length - 1; i >= 0; i--) {
         final slot = page.slots[i];
         if (slot.identity.logicalIndex < start) break;
+        final content =
+            contentTransform?.call(slot.message) ?? slot.message.content;
+        if (content.isEmpty) continue;
         selected.insert(0, slot.message);
-        chars += slot.message.content.length;
+        chars += content.length;
         if (chars >= _titleSourceMaxChars) break;
       }
       if (chars >= _titleSourceMaxChars ||
@@ -1380,14 +1389,17 @@ class ChatService extends ChangeNotifier {
   /// `generateTitleSource` paths feed the model the same window.
   List<ChatMessage> _titleSourceTailWindow(
     List<ChatMessage> messages,
-    int start,
-  ) {
+    int start, {
+    String Function(ChatMessage message)? contentTransform,
+  }) {
     final selected = <ChatMessage>[];
     var chars = 0;
     for (var i = messages.length - 1; i >= start; i--) {
       final message = messages[i];
+      final content = contentTransform?.call(message) ?? message.content;
+      if (content.isEmpty) continue;
       selected.insert(0, message);
-      chars += message.content.length;
+      chars += content.length;
       if (chars >= _titleSourceMaxChars) break;
     }
     return selected;

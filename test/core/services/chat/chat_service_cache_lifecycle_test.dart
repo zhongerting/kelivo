@@ -6,6 +6,8 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
 import 'package:Kelivo/core/services/chat/chat_service.dart';
+import 'package:Kelivo/core/models/assistant.dart';
+import 'package:Kelivo/core/utils/model_visible_history.dart';
 
 class _FakePathProviderPlatform extends PathProviderPlatform {
   _FakePathProviderPlatform(this.path);
@@ -258,6 +260,44 @@ void main() {
   });
 
   group('generateTitleSource', () {
+    test('uses filtered text for the cold and warm tail window', () async {
+      final service = createService();
+      await service.init();
+      final conversation = await service.createConversation(title: 'Chat');
+      await service.addMessage(
+        conversationId: conversation.id,
+        role: 'user',
+        content: 'earlier title context',
+      );
+      await service.addMessage(
+        conversationId: conversation.id,
+        role: 'assistant',
+        content: '<think>${'x' * 4000}</think>latest visible answer',
+      );
+      const assistant = Assistant(
+        id: 'rp-1',
+        name: 'RP',
+        excludeThinkingFromContext: true,
+      );
+      final transform = ModelVisibleHistory.transformFor(assistant);
+
+      final cold = await service.generateTitleSource(
+        conversation.id,
+        contentTransform: transform,
+      );
+      await service.loadMessages(conversation.id);
+      final warm = await service.generateTitleSource(
+        conversation.id,
+        contentTransform: transform,
+      );
+
+      expect(cold, warm);
+      expect(cold, contains('earlier title context'));
+      expect(cold, contains('latest visible answer'));
+      expect(cold, isNot(contains('<think>')));
+      expect(cold, isNot(contains('x' * 100)));
+    });
+
     test(
       'supports a sending copy transform without mutating history',
       () async {

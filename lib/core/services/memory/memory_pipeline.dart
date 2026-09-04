@@ -7,7 +7,6 @@ import '../../database/chat_database_repository.dart';
 import '../../models/assistant.dart';
 import '../../models/chat_message.dart';
 import '../../models/memory_entry.dart';
-import '../../models/message_part.dart';
 import '../../providers/assistant_provider.dart';
 import '../../providers/memory_provider_v2.dart';
 import '../../providers/settings_provider.dart';
@@ -21,6 +20,7 @@ import 'memory_prompts.dart';
 import 'memory_repository.dart';
 import 'memory_smart_add.dart';
 import 'memory_trace.dart';
+import '../../utils/model_visible_history.dart';
 
 /// Result of a background organize run (§12 / §13.6).
 class MemoryOrganizeResult {
@@ -181,8 +181,10 @@ class MemoryPipelineService {
   /// Build `buildConversationText(window)` (§12.3).
   static String buildConversationText(
     List<ChatMessage> window,
-    MemoryPromptLang lang,
-  ) {
+    MemoryPromptLang lang, {
+    Assistant? assistant,
+    String Function(ChatMessage message)? contentTransform,
+  }) {
     final userPrefix = lang == MemoryPromptLang.zh ? '用户：' : 'User: ';
     final assistantPrefix = lang == MemoryPromptLang.zh ? '助手：' : 'Assistant: ';
     final lines = <String>[];
@@ -196,11 +198,10 @@ class MemoryPipelineService {
         continue;
       }
       // TextPart bodies only — image/file attachments live as structured parts.
-      var text = m.parts
-          .whereType<TextPart>()
-          .map((part) => part.text)
-          .join()
-          .trim();
+      var text =
+          (contentTransform?.call(m) ??
+                  ModelVisibleHistory.contentFor(m, assistant: assistant))
+              .trim();
       if (text.isEmpty) continue;
       if (text.length > 2000) {
         text = '${text.substring(0, 2000)}…';
@@ -596,9 +597,11 @@ class MemoryPipelineService {
     final windowEnd = window.last.order;
     final failureKey = '$conversationId|$watermark|$windowEnd';
     final lang = settings.resolvedMemoryPromptLang;
-    final conversationText = buildConversationText([
-      for (final e in window) e.message,
-    ], lang);
+    final conversationText = buildConversationText(
+      [for (final e in window) e.message],
+      lang,
+      assistant: assistant,
+    );
     handle?.setWindow(
       watermark: watermark,
       startOrder: window.first.order,

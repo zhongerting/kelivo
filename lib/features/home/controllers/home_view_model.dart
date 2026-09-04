@@ -15,10 +15,10 @@ import '../../../core/services/model_override_payload_parser.dart';
 import '../../../core/services/logging/flutter_logger.dart';
 import '../../../core/services/memory/memory_pipeline.dart';
 import '../../../core/services/memory/memory_trace.dart';
+import '../../../core/utils/model_visible_history.dart';
 import '../../../utils/utf16_safe_cut.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../chat/widgets/chat_message_widget.dart' show ToolUIPart;
-import '../../chat/utils/thinking_tag_parser.dart';
 import '../services/message_builder_service.dart';
 import '../services/message_generation_service.dart';
 import '../../character_card/services/character_card_macro_service.dart';
@@ -1271,7 +1271,9 @@ class HomeViewModel extends ChangeNotifier {
     var stage = 'prepare';
     var inputLength = summarizeInput.fold<int>(
       0,
-      (sum, message) => sum + message.content.length,
+      (sum, message) =>
+          sum +
+          ModelVisibleHistory.contentFor(message, assistant: assistant).length,
     );
 
     Future<String> summarizeContent(String content, String label) async {
@@ -1313,6 +1315,7 @@ class HomeViewModel extends ChangeNotifier {
         summarizeInput,
         options,
         safeRequestChars: requestChars,
+        assistant: assistant,
       );
       if (chunks.isEmpty) return 'no_messages';
       inputLength = chunks.fold<int>(0, (sum, chunk) => sum + chunk.length);
@@ -1613,13 +1616,7 @@ class HomeViewModel extends ChangeNotifier {
     // both cache and paging paths collect the same ~3000-char tail window)
     final content = await _chatService.generateTitleSource(
       convo.id,
-      contentTransform: assistant?.excludeThinkingFromContext == true
-          ? (message) => message.role == 'assistant'
-                ? ThinkingTagParser.parseWithRanges(
-                    message.content,
-                  ).visibleContent
-                : message.content
-          : null,
+      contentTransform: ModelVisibleHistory.transformFor(assistant),
     );
 
     String prompt = settings.titlePrompt
@@ -1904,6 +1901,7 @@ class HomeViewModel extends ChangeNotifier {
         providerKey: provKey,
         modelId: mdlId,
         messages: msgs,
+        assistant: assistant,
         truncateIndex: _chatService.getContextStartIndex(conversationId),
         locale: locale,
         thinkingBudget: budget,

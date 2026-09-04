@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:Kelivo/core/models/assistant.dart';
 import 'package:Kelivo/core/models/chat_message.dart';
 import 'package:Kelivo/features/home/controllers/home_view_model.dart';
 
@@ -154,6 +155,40 @@ void main() {
       ]);
 
       expect(text, 'Assistant: answer');
+    });
+
+    test('压缩模型只看到过滤后的正文且不生成空助手段', () {
+      const assistant = Assistant(
+        id: 'rp-1',
+        name: 'RP',
+        excludeThinkingFromContext: true,
+      );
+      final messages = [
+        _message(id: 'u1', role: 'user', content: 'question'),
+        _message(
+          id: 'a1',
+          role: 'assistant',
+          content: '<think>private trigger</think>visible answer',
+        ),
+        _message(
+          id: 'a2',
+          role: 'assistant',
+          content: '<thinking>private only</thinking>',
+        ),
+      ];
+
+      final text = buildConversationTextForCompression(
+        messages,
+        assistant: assistant,
+      );
+
+      expect(text, 'User: question\n\nAssistant: visible answer');
+      expect(text, isNot(contains('private')));
+      expect(
+        messages[1].content,
+        '<think>private trigger</think>visible answer',
+      );
+      expect(messages[2].content, '<thinking>private only</thinking>');
     });
   });
 
@@ -509,6 +544,31 @@ void main() {
 
       expect(chunks, hasLength(greaterThan(1)));
       expect(chunks.join('\n\n'), contains('old-0'));
+    });
+
+    test('分块预算基于过滤后的正文', () {
+      const assistant = Assistant(
+        id: 'rp-1',
+        name: 'RP',
+        excludeThinkingFromContext: true,
+      );
+      final messages = [
+        _message(
+          id: 'a1',
+          role: 'assistant',
+          content: '<think>${'x' * 200}</think>ok',
+        ),
+      ];
+
+      final chunks = buildCompressRequestContents(
+        messages,
+        const CompressContextOptions(mode: CompressContextLimitMode.unlimited),
+        safeRequestChars: 20,
+        assistant: assistant,
+      );
+
+      expect(chunks, ['Assistant: ok']);
+      expect(chunks.join(), isNot(contains('x')));
     });
   });
 

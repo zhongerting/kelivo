@@ -1,6 +1,8 @@
 import '../../../core/models/chat_message.dart';
+import '../../../core/models/assistant.dart';
 import '../../../core/providers/settings_provider.dart';
 import '../../../core/services/api/chat_api_service.dart';
+import '../../../core/utils/model_visible_history.dart';
 
 class ChatSuggestionService {
   static const int maxSuggestionCount = 3;
@@ -44,6 +46,8 @@ class ChatSuggestionService {
     int truncateIndex = -1,
     int maxMessages = 8,
     int maxChars = 4000,
+    Assistant? assistant,
+    String Function(ChatMessage message)? contentTransform,
   }) {
     final effectiveMessages =
         truncateIndex >= 0 && truncateIndex < messages.length
@@ -59,12 +63,16 @@ class ChatSuggestionService {
     final selected = recent.length > maxMessages
         ? recent.sublist(recent.length - maxMessages)
         : recent;
-    final joined = selected
-        .map((m) {
-          final role = m.role == 'user' ? 'User' : 'Assistant';
-          return '$role: ${m.content.trim()}';
-        })
-        .join('\n\n');
+    final lines = <String>[];
+    for (final m in selected) {
+      final content =
+          contentTransform?.call(m) ??
+          ModelVisibleHistory.contentFor(m, assistant: assistant);
+      if (content.trim().isEmpty) continue;
+      final role = m.role == 'user' ? 'User' : 'Assistant';
+      lines.add('$role: ${content.trim()}');
+    }
+    final joined = lines.join('\n\n');
     if (joined.length <= maxChars) return joined;
     return joined.substring(joined.length - maxChars);
   }
@@ -77,8 +85,13 @@ class ChatSuggestionService {
     required int truncateIndex,
     required String locale,
     int? thinkingBudget,
+    Assistant? assistant,
   }) async {
-    final content = buildContent(messages, truncateIndex: truncateIndex);
+    final content = buildContent(
+      messages,
+      truncateIndex: truncateIndex,
+      assistant: assistant,
+    );
     if (content.trim().isEmpty) return const <String>[];
     final prompt = settings.suggestionPrompt
         .replaceAll('{content}', content)
