@@ -147,6 +147,20 @@ class MessageGenerationService {
       includeToolMessages: includeToolMessages,
     );
 
+    // Operate on the canonical request copy before world-book scanning or
+    // context trimming. Persisted messages and their visible reasoning stay
+    // untouched.
+    messageBuilderService.filterHistoricalThinkingForContext(
+      apiMessages,
+      assistant: assistant,
+      processingMessageId: processingMessageId,
+    );
+    messageBuilderService.filterStructuredThinkingForContext(
+      apiMessages,
+      assistant: assistant,
+      processingMessageId: processingMessageId,
+    );
+
     // Apply assistant replace-only regexes at send-time (visual stays unchanged).
     if (assistant != null && assistant.regexRules.isNotEmpty) {
       for (int i = 0; i < apiMessages.length; i++) {
@@ -167,6 +181,11 @@ class MessageGenerationService {
     // (same keyword trigger range as before OCR-after-trim). Document/OCR work
     // runs only after the single final context trim below.
     messageBuilderService.injectSystemPrompt(apiMessages, assistant, modelId);
+    messageBuilderService.injectCharacterPrompt(
+      apiMessages,
+      assistant,
+      userName: userName,
+    );
     await messageBuilderService.injectMemoryAndRecentChats(
       apiMessages,
       assistant,

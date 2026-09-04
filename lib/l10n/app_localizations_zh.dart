@@ -8736,6 +8736,87 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get contextLogSourcePromptPreset => '提示词预设';
+
+  @override
+  String get characterCardImportButton => '导入角色卡';
+
+  @override
+  String get characterCardImportReportTitle => '角色卡导入报告';
+
+  @override
+  String characterCardImportSource(String format, String version) {
+    return '来源：$format，规范 $version';
+  }
+
+  @override
+  String get characterCardImportFieldsTitle => '已导入字段';
+
+  @override
+  String get characterCardImportCharacterPrompt => '人物设定';
+
+  @override
+  String get characterCardImportFirstMessage => '开场白';
+
+  @override
+  String get characterCardImportWorldBook => '内嵌世界书';
+
+  @override
+  String get characterCardImportIgnoredFields => '已忽略字段';
+
+  @override
+  String get characterCardImportWorldBookSummaryTitle => '世界书转换';
+
+  @override
+  String characterCardImportWorldBookSummary(
+    int total,
+    int enabled,
+    int disabled,
+    int skipped,
+  ) {
+    return '条目：共 $total 条，启用 $enabled 条，禁用 $disabled 条，跳过 $skipped 条。';
+  }
+
+  @override
+  String get characterCardImportWarnings => '警告';
+
+  @override
+  String get characterCardImportNone => '无';
+
+  @override
+  String get characterCardImportClose => '关闭';
+
+  @override
+  String characterCardImportFailed(String error) {
+    return '角色卡导入失败：$error';
+  }
+
+  @override
+  String get assistantEditRoleplayModeTitle => 'RP 助手';
+
+  @override
+  String get assistantEditRoleplayModeSubtitle => '人物设定和开场白与系统提示词分开保存。';
+
+  @override
+  String get assistantEditCharacterPromptTitle => '人物设定';
+
+  @override
+  String get assistantEditCharacterPromptHint => '描述、性格和场景……';
+
+  @override
+  String get assistantEditFirstMessageTitle => '开场白';
+
+  @override
+  String get assistantEditFirstMessageHint => '每个新对话中的第一条助手消息……';
+
+  @override
+  String get assistantEditExcludeThinkingTitle => '从未来上下文中排除历史推理';
+
+  @override
+  String get assistantEditExcludeThinkingSubtitle =>
+      '推理仍保留在本地显示，只把之前轮次的最终回答发送给模型。';
+
+  @override
+  String get contextLogSourceCharacterPrompt => '人物设定';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -17373,6 +17454,87 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get contextLogSourcePromptPreset => '提示词预设';
+
+  @override
+  String get characterCardImportButton => '导入角色卡';
+
+  @override
+  String get characterCardImportReportTitle => '角色卡导入报告';
+
+  @override
+  String characterCardImportSource(String format, String version) {
+    return '来源：$format，规范 $version';
+  }
+
+  @override
+  String get characterCardImportFieldsTitle => '已导入字段';
+
+  @override
+  String get characterCardImportCharacterPrompt => '人物设定';
+
+  @override
+  String get characterCardImportFirstMessage => '开场白';
+
+  @override
+  String get characterCardImportWorldBook => '内嵌世界书';
+
+  @override
+  String get characterCardImportIgnoredFields => '已忽略字段';
+
+  @override
+  String get characterCardImportWorldBookSummaryTitle => '世界书转换';
+
+  @override
+  String characterCardImportWorldBookSummary(
+    int total,
+    int enabled,
+    int disabled,
+    int skipped,
+  ) {
+    return '条目：共 $total 条，启用 $enabled 条，禁用 $disabled 条，跳过 $skipped 条。';
+  }
+
+  @override
+  String get characterCardImportWarnings => '警告';
+
+  @override
+  String get characterCardImportNone => '无';
+
+  @override
+  String get characterCardImportClose => '关闭';
+
+  @override
+  String characterCardImportFailed(String error) {
+    return '角色卡导入失败：$error';
+  }
+
+  @override
+  String get assistantEditRoleplayModeTitle => 'RP 助手';
+
+  @override
+  String get assistantEditRoleplayModeSubtitle => '人物设定和开场白与系统提示词分开保存。';
+
+  @override
+  String get assistantEditCharacterPromptTitle => '人物设定';
+
+  @override
+  String get assistantEditCharacterPromptHint => '描述、性格和场景……';
+
+  @override
+  String get assistantEditFirstMessageTitle => '开场白';
+
+  @override
+  String get assistantEditFirstMessageHint => '每个新对话中的第一条助手消息……';
+
+  @override
+  String get assistantEditExcludeThinkingTitle => '从未来上下文中排除历史推理';
+
+  @override
+  String get assistantEditExcludeThinkingSubtitle =>
+      '推理仍保留在本地显示，只把之前轮次的最终回答发送给模型。';
+
+  @override
+  String get contextLogSourceCharacterPrompt => '人物设定';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -26084,4 +26246,85 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get contextLogSourcePromptPreset => '提示詞預設';
+
+  @override
+  String get characterCardImportButton => '匯入角色卡';
+
+  @override
+  String get characterCardImportReportTitle => '角色卡匯入報告';
+
+  @override
+  String characterCardImportSource(String format, String version) {
+    return '來源：$format，規範 $version';
+  }
+
+  @override
+  String get characterCardImportFieldsTitle => '已匯入欄位';
+
+  @override
+  String get characterCardImportCharacterPrompt => '人物設定';
+
+  @override
+  String get characterCardImportFirstMessage => '開場白';
+
+  @override
+  String get characterCardImportWorldBook => '內嵌世界書';
+
+  @override
+  String get characterCardImportIgnoredFields => '已忽略欄位';
+
+  @override
+  String get characterCardImportWorldBookSummaryTitle => '世界書轉換';
+
+  @override
+  String characterCardImportWorldBookSummary(
+    int total,
+    int enabled,
+    int disabled,
+    int skipped,
+  ) {
+    return '條目：共 $total 條，啟用 $enabled 條，停用 $disabled 條，跳過 $skipped 條。';
+  }
+
+  @override
+  String get characterCardImportWarnings => '警告';
+
+  @override
+  String get characterCardImportNone => '無';
+
+  @override
+  String get characterCardImportClose => '關閉';
+
+  @override
+  String characterCardImportFailed(String error) {
+    return '角色卡匯入失敗：$error';
+  }
+
+  @override
+  String get assistantEditRoleplayModeTitle => 'RP 助手';
+
+  @override
+  String get assistantEditRoleplayModeSubtitle => '人物設定和開場白與系統提示詞分開儲存。';
+
+  @override
+  String get assistantEditCharacterPromptTitle => '人物設定';
+
+  @override
+  String get assistantEditCharacterPromptHint => '描述、性格和場景……';
+
+  @override
+  String get assistantEditFirstMessageTitle => '開場白';
+
+  @override
+  String get assistantEditFirstMessageHint => '每個新對話中的第一條助手訊息……';
+
+  @override
+  String get assistantEditExcludeThinkingTitle => '從未來上下文中排除歷史推理';
+
+  @override
+  String get assistantEditExcludeThinkingSubtitle =>
+      '推理仍保留在本地顯示，只把之前輪次的最終回答傳送給模型。';
+
+  @override
+  String get contextLogSourceCharacterPrompt => '人物設定';
 }

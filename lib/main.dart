@@ -583,9 +583,17 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ToolApprovalService()),
         ChangeNotifierProvider(create: (_) => AskUserInteractionService()),
         ChangeNotifierProvider(
+          create: (_) => WorldBookProvider(preferences: businessPreferences),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => PromptPresetProvider(preferences: businessPreferences),
+        ),
+        ChangeNotifierProvider(
           create: (ctx) => AssistantProvider(
             preferences: businessPreferences,
             chatService: ctx.read<ChatService>(),
+            promptPresetProvider: ctx.read<PromptPresetProvider>(),
+            worldBookProvider: ctx.read<WorldBookProvider>(),
           ),
         ),
         ChangeNotifierProvider(
@@ -610,12 +618,6 @@ class MyApp extends StatelessWidget {
           create: (_) => InstructionInjectionGroupProvider(
             preferences: businessPreferences,
           ),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => WorldBookProvider(preferences: businessPreferences),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => PromptPresetProvider(preferences: businessPreferences),
         ),
         ChangeNotifierProvider(
           create: (_) => MemoryProvider(preferences: businessPreferences),

@@ -5,6 +5,11 @@ import 'business_data.dart';
 import 'business_repository.dart';
 import 'business_settings_router.dart';
 
+/// Optional write hook used by tests to inject a failure at a preference
+/// boundary. Production callers leave this unset.
+typedef BusinessPreferenceWriteInterceptor =
+    FutureOr<void> Function(String key, Object? value);
+
 typedef _SyntheticEntityIdentity = ({
   String rowId,
   bool hadPayloadId,
@@ -17,11 +22,12 @@ typedef _SyntheticEntityIdentity = ({
 /// snapshot. Writes are serialized and update the in-memory view only after the
 /// repository operation succeeds.
 final class BusinessPreferences {
-  BusinessPreferences(this._repository);
+  BusinessPreferences(this._repository, {this.writeInterceptor});
 
   static const _providersOrderKey = 'providers_order_v1';
 
   final BusinessRepository _repository;
+  final BusinessPreferenceWriteInterceptor? writeInterceptor;
   Map<String, Object> _values = <String, Object>{};
   final Map<BusinessEntityKind, Map<String, _SyntheticEntityIdentity>>
   _syntheticIdentities = {};
@@ -107,6 +113,7 @@ final class BusinessPreferences {
   Future<bool> remove(String key) async {
     await load();
     return _serialize(() async {
+      await writeInterceptor?.call(key, null);
       final kind = _entityKindForKey(key);
       if (kind != null) {
         final next = Map<String, Object>.from(_values)..remove(key);
@@ -125,6 +132,7 @@ final class BusinessPreferences {
   Future<bool> _setValue(String key, Object value) async {
     await load();
     return _serialize(() async {
+      await writeInterceptor?.call(key, value);
       final kind = _entityKindForKey(key);
       if (kind != null) {
         final next = Map<String, Object>.from(_values)..[key] = value;

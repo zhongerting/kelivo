@@ -27,6 +27,8 @@ import '../../../core/services/logging/context_logger.dart';
 import '../../../core/services/memory/memory_block_builder.dart';
 import '../../../core/services/memory/memory_prompts.dart';
 import '../../../core/services/search/search_tool_service.dart';
+import '../../character_card/services/character_card_macro_service.dart';
+import '../../chat/utils/thinking_tag_parser.dart';
 import '../../prompt_preset/services/prompt_preset_macro_service.dart';
 import '../../../core/providers/instruction_injection_provider.dart';
 import '../../../core/providers/world_book_provider.dart';
@@ -111,6 +113,7 @@ class MemoryInjectionPass {
 class MessageBuilderService {
   static const String internalMediaPathsKey = multimodalInternalMediaPathsKey;
   static const String internalRevisionIdKey = multimodalInternalRevisionIdKey;
+  static const String internalMessageIdKey = multimodalInternalMessageIdKey;
 
   MessageBuilderService({
     required this.chatService,
@@ -291,6 +294,7 @@ class MessageBuilderService {
                 'role': 'assistant',
                 'content': '\n\n',
                 'tool_calls': calls,
+                internalMessageIdKey: m.id,
               };
               final turn = providerArtifactLookup?.call(
                 m,
@@ -357,6 +361,7 @@ class MessageBuilderService {
       if (role == 'user') {
         message[internalRevisionIdKey] = m.id;
       } else {
+        message[internalMessageIdKey] = m.id;
         final container = providerArtifactLookup?.call(
           m,
           claudeContainerArtifactKind,
@@ -398,6 +403,252 @@ class MessageBuilderService {
     }
 
     return out;
+  }
+
+  /// Remove completed inline reasoning from the temporary context copy.
+  ///
+  /// The persisted [ChatMessage] is never touched. The active streaming/tool
+  /// turn is identified by [processingMessageId] and remains intact so a
+  /// provider can continue that same turn.
+  void filterHistoricalThinkingForContext(
+    List<Map<String, dynamic>> apiMessages, {
+    required Assistant? assistant,
+    String? processingMessageId,
+  }) {
+    if (assistant?.excludeThinkingFromContext != true) return;
+
+    final remove = <Map<String, dynamic>>[];
+    for (final message in apiMessages) {
+      if ((message['role'] ?? '').toString() != 'assistant') continue;
+      final messageId = (message[internalMessageIdKey] ?? '').toString();
+      if (processingMessageId != null && messageId == processingMessageId) {
+        continue;
+      }
+
+      final rawContent = message['content'];
+      if (rawContent is! String || rawContent.isEmpty) continue;
+      final parsed = ThinkingTagParser.parseWithRanges(rawContent);
+      if (!parsed.hasThinking) continue;
+
+      final visible = parsed.visibleContent;
+      message['content'] = visible;
+      if (ContextLogger.enabled) {
+        ContextSegmentTags.replaceWithSingle(
+          message,
+          source: ContextSource.chatHistory,
+          length: visible.length,
+        );
+      }
+
+      if (visible.trim().isEmpty && !_hasNonTextAssistantPayload(message)) {
+        remove.add(message);
+      }
+    }
+    apiMessages.removeWhere(remove.contains);
+  }
+
+  static bool _hasNonTextAssistantPayload(Map<String, dynamic> message) {
+    final toolCalls = message['tool_calls'];
+    if (toolCalls is List && toolCalls.isNotEmpty) return true;
+    final media = message[multimodalInternalMediaPathsKey];
+    if (media is List && media.isNotEmpty) return true;
+    for (final key in const [
+      multimodalInternalClaudeContainerKey,
+      multimodalInternalClaudeTurnKey,
+      multimodalInternalGeminiThoughtSignatureKey,
+    ]) {
+      final value = message[key];
+      if (value != null && value.toString().isNotEmpty) return true;
+    }
+    return false;
+  }
+
+  /// Remove readable provider reasoning from a completed history message.
+  ///
+  /// Opaque signatures/encrypted payloads remain available to the provider,
+  /// while Claude's block artifact is filtered as structured JSON below.
+  void filterStructuredThinkingForContext(
+    List<Map<String, dynamic>> apiMessages, {
+    required Assistant? assistant,
+    String? processingMessageId,
+  }) {
+    if (assistant?.excludeThinkingFromContext != true) return;
+
+    for (final message in apiMessages) {
+      if ((message['role'] ?? '').toString() != 'assistant') continue;
+      final messageId = (message[internalMessageIdKey] ?? '').toString();
+      if (processingMessageId != null && messageId == processingMessageId) {
+        continue;
+      }
+
+      message.remove('reasoning_content');
+      message.remove('reasoning');
+      if (message.containsKey('reasoning_details')) {
+        final filtered = _filterReasoningDetails(message['reasoning_details']);
+        if (filtered == null ||
+            (filtered is List && filtered.isEmpty) ||
+            (filtered is Map && filtered.isEmpty)) {
+          message.remove('reasoning_details');
+        } else {
+          message['reasoning_details'] = filtered;
+        }
+      }
+
+      final rawTurn = message[multimodalInternalClaudeTurnKey];
+      if (rawTurn is String && rawTurn.isNotEmpty) {
+        final filteredTurn = _filterClaudeTurnArtifact(rawTurn);
+        if (filteredTurn == null || filteredTurn.isEmpty) {
+          message.remove(multimodalInternalClaudeTurnKey);
+        } else {
+          message[multimodalInternalClaudeTurnKey] = filteredTurn;
+        }
+      }
+      _filterClaudeMetadataOnToolCalls(message);
+    }
+  }
+
+  static dynamic _filterReasoningDetails(dynamic raw) {
+    if (raw is List) {
+      final filtered = <Map<String, dynamic>>[];
+      for (final item in raw) {
+        final safe = _filterReasoningDetail(item);
+        if (safe != null) filtered.add(safe);
+      }
+      return filtered;
+    }
+    if (raw is Map) return _filterReasoningDetail(raw);
+    // A provider-specific malformed value cannot be safely replayed. Remove
+    // it instead of stringifying it into the request or leaking prose hidden
+    // in an unexpected shape.
+    return null;
+  }
+
+  static Map<String, dynamic>? _filterReasoningDetail(dynamic raw) {
+    if (raw is! Map) return null;
+    final copy = raw.map((key, value) => MapEntry(key.toString(), value));
+    final type = (copy['type'] ?? '').toString().trim().toLowerCase();
+    final hasReadableText =
+        copy.containsKey('text') ||
+        copy.containsKey('summary') ||
+        (type.startsWith('reasoning.') && copy.containsKey('content'));
+    if (!hasReadableText) return copy;
+
+    // Missing `type` is not permission to keep a prose-bearing object. Some
+    // OpenAI-compatible gateways omit it on the final delta.
+    copy
+      ..remove('text')
+      ..remove('summary')
+      ..remove('content');
+    return _hasOpaqueReasoningArtifact(copy) ? copy : null;
+  }
+
+  static bool _hasOpaqueReasoningArtifact(Map<String, dynamic> entry) {
+    const opaqueKeys = <String>{
+      'signature',
+      'thoughtSignature',
+      'thought_signature',
+      'data',
+      'encrypted',
+      'ciphertext',
+      'encrypted_content',
+      'encryptedContent',
+      'payload',
+      'id',
+    };
+    return entry.keys.any(opaqueKeys.contains);
+  }
+
+  static String? _filterClaudeTurnArtifact(String raw) {
+    late final Object? decoded;
+    try {
+      decoded = jsonDecode(raw);
+    } on FormatException {
+      return raw;
+    }
+    if (decoded is! List) return raw;
+
+    final responses = <List<Map<String, dynamic>>>[];
+    for (final response in decoded) {
+      if (response is! List) return raw;
+      final blocks = <Map<String, dynamic>>[];
+      for (final block in response) {
+        if (block is! Map) return raw;
+        final normalized = block.map(
+          (key, value) => MapEntry(key.toString(), value),
+        );
+        final type = (normalized['type'] ?? '').toString();
+        if (type == 'thinking' || type == 'redacted_thinking') continue;
+        blocks.add(normalized);
+      }
+      if (blocks.isNotEmpty) responses.add(blocks);
+    }
+    if (responses.isEmpty) return null;
+    return jsonEncode(responses);
+  }
+
+  static void _filterClaudeMetadataOnToolCalls(Map<String, dynamic> message) {
+    final rawCalls = message['tool_calls'];
+    if (rawCalls is! List) return;
+    for (final rawCall in rawCalls) {
+      if (rawCall is! Map) continue;
+      final metadata = rawCall['metadata'];
+      if (metadata is! Map) continue;
+      final anthropic = metadata['anthropic'];
+      if (anthropic is! Map) continue;
+
+      final nextAnthropic = Map<String, dynamic>.from(
+        anthropic.map((key, value) => MapEntry(key.toString(), value)),
+      );
+      var changed = false;
+      for (final key in const ['assistant_blocks', 'responses']) {
+        final rawValue = nextAnthropic[key];
+        if (rawValue is! List) continue;
+        final nextValue = _filterClaudeResponses(rawValue);
+        if (nextValue == null) {
+          nextAnthropic.remove(key);
+        } else {
+          nextAnthropic[key] = nextValue;
+        }
+        changed = true;
+      }
+      if (!changed) continue;
+      final nextMetadata = Map<String, dynamic>.from(
+        metadata.map((key, value) => MapEntry(key.toString(), value)),
+      );
+      nextMetadata['anthropic'] = nextAnthropic;
+      rawCall['metadata'] = nextMetadata;
+    }
+  }
+
+  static List<dynamic>? _filterClaudeResponses(List<dynamic> raw) {
+    if (raw.isEmpty) return null;
+    final filtered = <dynamic>[];
+    for (final value in raw) {
+      if (value is List) {
+        final blocks = <Map<String, dynamic>>[];
+        for (final block in value) {
+          if (block is! Map) return raw;
+          final normalized = block.map(
+            (key, item) => MapEntry(key.toString(), item),
+          );
+          final type = (normalized['type'] ?? '').toString();
+          if (type == 'thinking' || type == 'redacted_thinking') continue;
+          blocks.add(normalized);
+        }
+        if (blocks.isNotEmpty) filtered.add(blocks);
+      } else if (value is Map) {
+        final normalized = value.map(
+          (key, item) => MapEntry(key.toString(), item),
+        );
+        final type = (normalized['type'] ?? '').toString();
+        if (type != 'thinking' && type != 'redacted_thinking') {
+          filtered.add(normalized);
+        }
+      } else {
+        return raw;
+      }
+    }
+    return filtered.isEmpty ? null : filtered;
   }
 
   /// Collect structured `_kelivo_media_paths` entries from image/file parts.
@@ -480,6 +731,7 @@ class MessageBuilderService {
   void stripInternalRevisionIds(List<Map<String, dynamic>> apiMessages) {
     for (final message in apiMessages) {
       message.remove(internalRevisionIdKey);
+      message.remove(internalMessageIdKey);
       message.remove(kelivoContextSegmentsKey);
     }
   }
@@ -1602,6 +1854,40 @@ class MessageBuilderService {
       }
       apiMessages.insert(0, sysMessage);
     }
+  }
+
+  /// Inject the RP character definition as its own system message.
+  ///
+  /// It deliberately does not reuse [assistant.systemPrompt], so the two
+  /// editable fields remain independent in storage and in the UI.
+  void injectCharacterPrompt(
+    List<Map<String, dynamic>> apiMessages,
+    Assistant? assistant, {
+    required String userName,
+  }) {
+    if (assistant?.mode != AssistantMode.roleplay) return;
+    final raw = assistant!.characterPrompt.trim();
+    if (raw.isEmpty) return;
+    final content = CharacterCardMacroService.render(
+      raw,
+      charName: assistant.name,
+      userName: userName,
+    );
+    if (content.trim().isEmpty) return;
+    final message = <String, dynamic>{'role': 'system', 'content': content};
+    if (ContextLogger.enabled) {
+      ContextSegmentTags.replaceWithSingle(
+        message,
+        source: ContextSource.characterPrompt,
+        length: content.length,
+      );
+    }
+    var insertAt = 0;
+    while (insertAt < apiMessages.length &&
+        (apiMessages[insertAt]['role'] ?? '').toString() == 'system') {
+      insertAt++;
+    }
+    apiMessages.insert(insertAt, message);
   }
 
   /// Inject §11 memory rules into the system message.

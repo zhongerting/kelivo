@@ -18,6 +18,7 @@ final class BusinessTestHarness {
   static Future<BusinessTestHarness> create({
     Map<String, Object?> initial = const <String, Object?>{},
     Map<String, Object> localInitial = const <String, Object>{},
+    BusinessPreferenceWriteInterceptor? writeInterceptor,
   }) async {
     driftRuntimeOptions.dontWarnAboutMultipleDatabases = true;
     SharedPreferences.setMockInitialValues(localInitial);
@@ -29,7 +30,10 @@ final class BusinessTestHarness {
         BusinessSettingsRouter.normalizeAndRoute(initial),
       );
     }
-    final preferences = BusinessPreferences(repository);
+    final preferences = BusinessPreferences(
+      repository,
+      writeInterceptor: writeInterceptor,
+    );
     await preferences.load();
     return BusinessTestHarness._(database, repository, preferences);
   }
@@ -40,10 +44,12 @@ final class BusinessTestHarness {
 Future<BusinessTestHarness> createBusinessTestHarness({
   Map<String, Object?> initial = const <String, Object?>{},
   Map<String, Object> localInitial = const <String, Object>{},
+  BusinessPreferenceWriteInterceptor? writeInterceptor,
 }) async {
   final harness = await BusinessTestHarness.create(
     initial: initial,
     localInitial: localInitial,
+    writeInterceptor: writeInterceptor,
   );
   addTearDown(harness.close);
   return harness;

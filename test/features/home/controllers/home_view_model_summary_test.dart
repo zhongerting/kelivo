@@ -10,6 +10,8 @@ import 'package:provider/provider.dart';
 
 import '../../../support/business_test_harness.dart';
 import 'package:Kelivo/core/database/chat_database_repository.dart';
+import 'package:Kelivo/core/models/assistant.dart';
+import 'package:Kelivo/core/models/preset_message.dart';
 import 'package:Kelivo/core/providers/assistant_provider.dart';
 import 'package:Kelivo/core/providers/mcp_provider.dart';
 import 'package:Kelivo/core/providers/settings_provider.dart';
@@ -321,6 +323,134 @@ void main() {
     });
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets(
+    'RP conversation with only its opening message can become temporary',
+    (tester) async {
+      final controller = await pumpHarness(tester);
+      await tester.runAsync(() async {
+        final assistant = assistantProvider.currentAssistant!;
+        await assistantProvider.updateAssistant(
+          assistant.copyWith(
+            mode: AssistantMode.roleplay,
+            firstMessage: 'Hello, I am {{char}}.',
+          ),
+        );
+        final conversation = await chatService.createConversation(
+          title: 'RP Chat',
+          assistantId: assistant.id,
+        );
+        await chatService.addMessage(
+          conversationId: conversation.id,
+          role: 'assistant',
+          content: 'Hello, I am Summary Assistant.',
+        );
+        await controller.chatController.setCurrentConversationAndLoad(
+          chatService.getConversation(conversation.id)!,
+        );
+
+        expect(controller.canToggleTemporaryConversation, isTrue);
+        await controller.toggleTemporaryConversation();
+
+        expect(controller.isTemporaryConversation, isTrue);
+        expect(controller.messages, hasLength(1));
+        expect(controller.messages.single.role, 'assistant');
+      });
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'temporary RP conversation with only its opening can become ordinary',
+    (tester) async {
+      final controller = await pumpHarness(tester);
+      await tester.runAsync(() async {
+        final assistant = assistantProvider.currentAssistant!;
+        await assistantProvider.updateAssistant(
+          assistant.copyWith(
+            mode: AssistantMode.roleplay,
+            firstMessage: 'Hello, I am {{char}}.',
+          ),
+        );
+        final conversation = await chatService.createDraftConversation(
+          title: 'Temporary RP',
+          assistantId: assistant.id,
+          temporary: true,
+        );
+        await chatService.addMessage(
+          conversationId: conversation.id,
+          role: 'assistant',
+          content: 'Hello, I am Summary Assistant.',
+        );
+        await controller.chatController.setCurrentConversationAndLoad(
+          conversation,
+        );
+
+        expect(controller.canToggleTemporaryConversation, isTrue);
+        await controller.toggleTemporaryConversation();
+
+        expect(controller.isTemporaryConversation, isFalse);
+        expect(controller.messages, hasLength(1));
+        expect(controller.messages.single.role, 'assistant');
+      });
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'RP conversation with user, reply, or preset content cannot toggle',
+    (tester) async {
+      final controller = await pumpHarness(tester);
+      await tester.runAsync(() async {
+        final assistant = assistantProvider.currentAssistant!;
+        await assistantProvider.updateAssistant(
+          assistant.copyWith(
+            mode: AssistantMode.roleplay,
+            firstMessage: 'Hello, I am {{char}}.',
+            presetMessages: [
+              PresetMessage(role: 'user', content: 'Preset context.'),
+            ],
+          ),
+        );
+
+        Future<void> loadMessages(
+          String title,
+          List<({String role, String content})> seed,
+        ) async {
+          final conversation = await chatService.createConversation(
+            title: title,
+            assistantId: assistant.id,
+          );
+          for (final item in seed) {
+            await chatService.addMessage(
+              conversationId: conversation.id,
+              role: item.role,
+              content: item.content,
+            );
+          }
+          await controller.chatController.setCurrentConversationAndLoad(
+            chatService.getConversation(conversation.id)!,
+          );
+          expect(controller.canToggleTemporaryConversation, isFalse);
+        }
+
+        await loadMessages('User message', [
+          (role: 'assistant', content: 'Hello, I am Summary Assistant.'),
+          (role: 'user', content: 'Continue.'),
+        ]);
+        await loadMessages('Model reply', [
+          (role: 'assistant', content: 'Hello, I am Summary Assistant.'),
+          (role: 'user', content: 'Continue.'),
+          (role: 'assistant', content: 'Reply.'),
+        ]);
+        await loadMessages('Preset message', [
+          (role: 'assistant', content: 'Hello, I am Summary Assistant.'),
+          (role: 'user', content: 'Preset context.'),
+        ]);
+      });
+      expect(tester.takeException(), isNull);
+    },
+  );
 }
 
 class _ControllerHarness extends StatefulWidget {

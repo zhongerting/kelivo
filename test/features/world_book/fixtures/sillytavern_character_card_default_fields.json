@@ -1,0 +1,206 @@
+{
+  "name": "Default-shaped card",
+  "character_book": {
+    "name": "Default-shaped lore",
+    "description": "",
+    "scan_depth": 4,
+    "token_budget": 0,
+    "recursive_scanning": false,
+    "entries": [
+      {
+        "uid": 0,
+        "key": ["lantern"],
+        "keysecondary": [],
+        "comment": "Lantern",
+        "content": "The lantern is warm.",
+        "constant": false,
+        "selective": true,
+        "use_regex": false,
+        "case_sensitive": false,
+        "order": 100,
+        "position": 1,
+        "disable": false,
+        "addMemo": true,
+        "probability": 100,
+        "useProbability": true,
+        "depth": 4,
+        "role": 0,
+        "selectiveLogic": 0,
+        "group": "",
+        "group_weight": 100,
+        "groupOverride": false,
+        "sticky": 0,
+        "cooldown": 0,
+        "delay": 0,
+        "vectorized": false,
+        "matchWholeWords": false,
+        "characterFilter": {
+          "isExclude": false,
+          "names": [],
+          "tags": []
+        },
+        "extensions": {
+          "display_index": 0,
+          "defaultFlag": false
+        }
+      },
+      {
+        "uid": 1,
+        "key": ["probability-off"],
+        "keysecondary": [],
+        "comment": "Probability off",
+        "content": "Probability is disabled.",
+        "constant": false,
+        "selective": true,
+        "use_regex": false,
+        "case_sensitive": false,
+        "order": 99,
+        "position": 1,
+        "disable": false,
+        "probability": 20,
+        "useProbability": false,
+        "depth": 4,
+        "role": 0,
+        "selectiveLogic": 0,
+        "group": "",
+        "group_weight": 100,
+        "sticky": 0,
+        "cooldown": 0,
+        "delay": 0,
+        "vectorized": false,
+        "matchWholeWords": false,
+        "characterFilter": {
+          "isExclude": false,
+          "names": [],
+          "tags": []
+        }
+      },
+      {
+        "uid": 2,
+        "key": ["probability-on"],
+        "keysecondary": [],
+        "comment": "Probability on",
+        "content": "Probability is active.",
+        "probability": 20,
+        "useProbability": true,
+        "position": 1,
+        "role": 0
+      },
+      {
+        "uid": 3,
+        "key": ["secondary"],
+        "keysecondary": ["red"],
+        "comment": "Secondary",
+        "content": "Requires an unsupported secondary key.",
+        "position": 1,
+        "role": 0
+      },
+      {
+        "uid": 4,
+        "key": ["grouped"],
+        "comment": "Group",
+        "content": "Requires an unsupported group.",
+        "group": "combat",
+        "group_weight": 100,
+        "position": 1,
+        "role": 0
+      },
+      {
+        "uid": 5,
+        "key": ["sticky"],
+        "comment": "Sticky",
+        "content": "Requires unsupported sticky behavior.",
+        "sticky": 2,
+        "position": 1,
+        "role": 0
+      },
+      {
+        "uid": 6,
+        "key": ["filtered"],
+        "comment": "Character filter",
+        "content": "Requires an unsupported character filter.",
+        "characterFilter": {
+          "isExclude": false,
+          "names": ["Other Character"],
+          "tags": []
+        },
+        "position": 1,
+        "role": 0
+      },
+      {
+        "uid": 7,
+        "key": ["whole-word"],
+        "comment": "Whole word",
+        "content": "Requires whole-word matching.",
+        "matchWholeWords": true,
+        "position": 1,
+        "role": 0
+      },
+      {
+        "uid": 8,
+        "key": ["/secret/i"],
+        "comment": "Regex only",
+        "content": "Regex-only content stays disabled.",
+        "position": 1,
+        "role": 0
+      },
+      {
+        "uid": 9,
+        "key": ["lantern", "/danger/"],
+        "comment": "Mixed",
+        "content": "The ordinary keyword remains safe.",
+        "position": 1,
+        "role": 0
+      },
+      {
+        "uid": 10,
+        "key": ["deep"],
+        "comment": "Depth role",
+        "content": "Role zero at depth is unsupported.",
+        "position": 4,
+        "role": 0
+      },
+      {
+        "uid": 11,
+        "key": ["future"],
+        "comment": "Unknown extension",
+        "content": "Unknown semantic extensions stay disabled.",
+        "position": 1,
+        "role": 0,
+        "extensions": {
+          "futureCondition": "semantic"
+        }
+      },
+      {
+        "uid": 12,
+        "key": ["selective"],
+        "keysecondary": [],
+        "and": ["requires"],
+        "not": ["excludes"],
+        "comment": "AND and NOT",
+        "content": "Requires unsupported AND/NOT matching.",
+        "position": 1,
+        "role": 0
+      },
+      {
+        "uid": 13,
+        "key": ["timed"],
+        "comment": "Cooldown and delay",
+        "content": "Requires unsupported timing behavior.",
+        "cooldown": 2,
+        "delay": 1,
+        "position": 1,
+        "role": 0
+      },
+      {
+        "uid": 14,
+        "key": ["vector"],
+        "comment": "Vector",
+        "content": "Requires unsupported vector matching.",
+        "vectorized": true,
+        "position": 1,
+        "role": 0
+      }
+    ]
+  }
+}

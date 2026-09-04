@@ -11,12 +11,24 @@ class _PromptTab extends StatefulWidget {
 class _PromptTabState extends State<_PromptTab> {
   late final TextEditingController _sysCtrl;
   late final TextEditingController _tmplCtrl;
+  late final TextEditingController _characterCtrl;
+  late final TextEditingController _firstMessageCtrl;
   late final FocusNode _sysFocus;
   late final FocusNode _tmplFocus;
+  late final FocusNode _characterFocus;
+  late final FocusNode _firstMessageFocus;
   late final TextEditingController _presetCtrl;
+  Timer? _characterSaveTimer;
+  Timer? _firstMessageSaveTimer;
+  String? _pendingCharacterPrompt;
+  String? _pendingFirstMessage;
+  Future<void> _promptSaveTail = Future<void>.value();
+  bool _popInProgress = false;
   bool _showPresetInput = false;
   String _presetRole = 'user';
   final GlobalKey _presetHeaderKey = GlobalKey(debugLabel: 'presetHeader');
+
+  static const _promptSaveDebounce = Duration(milliseconds: 300);
 
   @override
   void initState() {
@@ -25,8 +37,14 @@ class _PromptTabState extends State<_PromptTab> {
     final a = ap.getById(widget.assistantId)!;
     _sysCtrl = TextEditingController(text: a.systemPrompt);
     _tmplCtrl = TextEditingController(text: a.messageTemplate);
+    _characterCtrl = TextEditingController(text: a.characterPrompt);
+    _firstMessageCtrl = TextEditingController(text: a.firstMessage);
     _sysFocus = FocusNode(debugLabel: 'systemPromptFocus');
     _tmplFocus = FocusNode(debugLabel: 'messageTemplateFocus');
+    _characterFocus = FocusNode(debugLabel: 'characterPromptFocus');
+    _firstMessageFocus = FocusNode(debugLabel: 'firstMessageFocus');
+    _characterFocus.addListener(_handleCharacterFocusChanged);
+    _firstMessageFocus.addListener(_handleFirstMessageFocusChanged);
     _presetCtrl = TextEditingController();
   }
 
@@ -38,17 +56,120 @@ class _PromptTabState extends State<_PromptTab> {
       final a = ap.getById(widget.assistantId)!;
       _sysCtrl.text = a.systemPrompt;
       _tmplCtrl.text = a.messageTemplate;
+      _characterCtrl.text = a.characterPrompt;
+      _firstMessageCtrl.text = a.firstMessage;
     }
   }
 
   @override
   void dispose() {
+    _characterFocus.removeListener(_handleCharacterFocusChanged);
+    _firstMessageFocus.removeListener(_handleFirstMessageFocusChanged);
+    _characterSaveTimer?.cancel();
+    _firstMessageSaveTimer?.cancel();
     _sysCtrl.dispose();
     _tmplCtrl.dispose();
+    _characterCtrl.dispose();
+    _firstMessageCtrl.dispose();
     _sysFocus.dispose();
     _tmplFocus.dispose();
+    _characterFocus.dispose();
+    _firstMessageFocus.dispose();
     _presetCtrl.dispose();
     super.dispose();
+  }
+
+  void _handleCharacterFocusChanged() {
+    if (!_characterFocus.hasFocus) unawaited(flushPendingChanges());
+  }
+
+  void _handleFirstMessageFocusChanged() {
+    if (!_firstMessageFocus.hasFocus) unawaited(flushPendingChanges());
+  }
+
+  void _scheduleCharacterPromptSave(String value) {
+    _pendingCharacterPrompt = value;
+    _characterSaveTimer?.cancel();
+    _characterSaveTimer = Timer(_promptSaveDebounce, () {
+      _characterSaveTimer = null;
+      unawaited(flushPendingChanges());
+    });
+  }
+
+  void _scheduleFirstMessageSave(String value) {
+    _pendingFirstMessage = value;
+    _firstMessageSaveTimer?.cancel();
+    _firstMessageSaveTimer = Timer(_promptSaveDebounce, () {
+      _firstMessageSaveTimer = null;
+      unawaited(flushPendingChanges());
+    });
+  }
+
+  /// Persists the latest RP text values and waits for any earlier write.
+  /// Called by focus loss and the route pop guard; dispose only cancels timers.
+  Future<void> flushPendingChanges() {
+    _characterSaveTimer?.cancel();
+    _characterSaveTimer = null;
+    _firstMessageSaveTimer?.cancel();
+    _firstMessageSaveTimer = null;
+    final characterPrompt = _pendingCharacterPrompt;
+    final firstMessage = _pendingFirstMessage;
+    _pendingCharacterPrompt = null;
+    _pendingFirstMessage = null;
+
+    if (characterPrompt == null && firstMessage == null) {
+      return _promptSaveTail;
+    }
+
+    Future<void> save() async {
+      final ap = context.read<AssistantProvider>();
+      final assistant = ap.getById(widget.assistantId);
+      if (assistant == null) return;
+      await ap.updateAssistant(
+        assistant.copyWith(
+          characterPrompt: characterPrompt ?? assistant.characterPrompt,
+          firstMessage: firstMessage ?? assistant.firstMessage,
+        ),
+      );
+    }
+
+    final next = _promptSaveTail.then<void>(
+      (_) => save(),
+      onError: (Object _, StackTrace __) => save(),
+    );
+    _promptSaveTail = next;
+    return next;
+  }
+
+  void _handlePopInvoked(Object? result, bool didPop) {
+    if (didPop || _popInProgress) return;
+    _popInProgress = true;
+    unawaited(_flushAndPop(result));
+  }
+
+  Future<void> _flushAndPop(Object? result) async {
+    try {
+      await flushPendingChanges();
+    } on Object catch (error, stackTrace) {
+      _popInProgress = false;
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          context: ErrorDescription(
+            'saving assistant prompt changes before leaving',
+          ),
+        ),
+      );
+      return;
+    }
+    if (!mounted) return;
+    final navigator = Navigator.of(context);
+    if (navigator.canPop()) {
+      navigator.pop(result);
+    } else {
+      _popInProgress = false;
+    }
   }
 
   void _insertAtCursor(TextEditingController controller, String toInsert) {
@@ -585,6 +706,168 @@ class _PromptTabState extends State<_PromptTab> {
       ),
     );
 
+    Widget roleplayCard() {
+      if (a.mode != AssistantMode.roleplay) return const SizedBox.shrink();
+
+      final roleplayHeader = SectionCard(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(12, 11, 12, 10),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                SizedBox(
+                  width: 36,
+                  child: Icon(
+                    Lucide.MessageCircle,
+                    size: 20,
+                    color: cs.primary,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        l10n.assistantEditRoleplayModeTitle,
+                        style: TextStyle(
+                          fontSize: 15,
+                          fontWeight: AppFontWeights.emphasis,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        l10n.assistantEditRoleplayModeSubtitle,
+                        style: TextStyle(
+                          fontSize: 12,
+                          height: 1.3,
+                          color: cs.onSurface.withValues(alpha: 0.62),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _iosDivider(context),
+          _iosSwitchRow(
+            context,
+            icon: Lucide.Brain,
+            label: l10n.assistantEditExcludeThinkingTitle,
+            subtitle: l10n.assistantEditExcludeThinkingSubtitle,
+            value: a.excludeThinkingFromContext,
+            onChanged: (enabled) =>
+                context.read<AssistantProvider>().updateAssistant(
+                  a.copyWith(excludeThinkingFromContext: enabled),
+                ),
+          ),
+        ],
+      );
+
+      Widget editor({
+        required String title,
+        required String hint,
+        required TextEditingController controller,
+        required FocusNode focusNode,
+        required ValueChanged<String> onChanged,
+        required int maxLines,
+      }) {
+        return Container(
+          decoration: BoxDecoration(
+            color: context.appColors.surfaceCard,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          padding: const EdgeInsets.fromLTRB(12, 12, 12, 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: AppFontWeights.emphasis,
+                ),
+              ),
+              const SizedBox(height: 9),
+              TextField(
+                controller: controller,
+                focusNode: focusNode,
+                maxLines: maxLines,
+                keyboardType: TextInputType.multiline,
+                textInputAction: TextInputAction.newline,
+                onChanged: onChanged,
+                decoration: InputDecoration(
+                  hintText: hint,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: cs.outlineVariant.withValues(alpha: 0.35),
+                    ),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: cs.primary.withValues(alpha: 0.5),
+                    ),
+                  ),
+                  contentPadding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+                ),
+              ),
+            ],
+          ),
+        );
+      }
+
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          roleplayHeader,
+          const SizedBox(height: 12),
+          editor(
+            title: l10n.assistantEditCharacterPromptTitle,
+            hint: l10n.assistantEditCharacterPromptHint,
+            controller: _characterCtrl,
+            focusNode: _characterFocus,
+            maxLines: 12,
+            onChanged: _scheduleCharacterPromptSave,
+          ),
+          const SizedBox(height: 12),
+          editor(
+            title: l10n.assistantEditFirstMessageTitle,
+            hint: l10n.assistantEditFirstMessageHint,
+            controller: _firstMessageCtrl,
+            focusNode: _firstMessageFocus,
+            maxLines: 8,
+            onChanged: _scheduleFirstMessageSave,
+          ),
+        ],
+      );
+    }
+
+    Widget normalThinkingFilterCard() {
+      if (a.mode == AssistantMode.roleplay) return const SizedBox.shrink();
+      return SectionCard(
+        children: [
+          _iosSwitchRow(
+            context,
+            icon: Lucide.Brain,
+            label: l10n.assistantEditExcludeThinkingTitle,
+            subtitle: l10n.assistantEditExcludeThinkingSubtitle,
+            value: a.excludeThinkingFromContext,
+            onChanged: (enabled) =>
+                context.read<AssistantProvider>().updateAssistant(
+                  a.copyWith(excludeThinkingFromContext: enabled),
+                ),
+          ),
+        ],
+      );
+    }
+
     // Preset conversation card
     Widget presetCard() {
       final a = ap.getById(widget.assistantId)!;
@@ -897,19 +1180,32 @@ class _PromptTabState extends State<_PromptTab> {
       );
     }
 
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
-      children: [
-        sysCard,
-        const SizedBox(height: 12),
-        PromptPresetSelector(assistantId: widget.assistantId),
-        const SizedBox(height: 12),
-        appendTimeCard,
-        const SizedBox(height: 12),
-        tmplCard,
-        const SizedBox(height: 12),
-        presetCard(),
-      ],
+    return PopScope<Object?>(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        _handlePopInvoked(result, didPop);
+      },
+      child: ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 20),
+        children: [
+          sysCard,
+          const SizedBox(height: 12),
+          roleplayCard(),
+          if (a.mode == AssistantMode.roleplay)
+            const SizedBox(height: 12)
+          else ...[
+            normalThinkingFilterCard(),
+            const SizedBox(height: 12),
+          ],
+          PromptPresetSelector(assistantId: widget.assistantId),
+          const SizedBox(height: 12),
+          appendTimeCard,
+          const SizedBox(height: 12),
+          tmplCard,
+          const SizedBox(height: 12),
+          presetCard(),
+        ],
+      ),
     );
   }
 }

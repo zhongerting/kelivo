@@ -56,6 +56,7 @@ import 'setting/quick_phrases_pane.dart';
 import 'setting/instruction_injection_pane.dart';
 import 'setting/world_book_pane.dart';
 import '../features/prompt_preset/pages/prompt_preset_page.dart';
+import '../features/character_card/widgets/character_card_import_report.dart';
 import 'setting/backup_pane.dart';
 import 'setting/hotkeys_pane.dart';
 import 'setting/network_proxy_pane.dart';

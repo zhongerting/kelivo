@@ -35,7 +35,14 @@ class _DesktopAssistantsBody extends StatelessWidget {
                         ),
                       ),
                     ),
-                    _AddAssistantButton(),
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _ImportAssistantButton(),
+                        const SizedBox(width: 4),
+                        _AddAssistantButton(),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -108,6 +115,43 @@ class _DesktopAssistantsBody extends StatelessWidget {
 class _AddAssistantButton extends StatefulWidget {
   @override
   State<_AddAssistantButton> createState() => _AddAssistantButtonState();
+}
+
+class _ImportAssistantButton extends StatefulWidget {
+  @override
+  State<_ImportAssistantButton> createState() => _ImportAssistantButtonState();
+}
+
+class _ImportAssistantButtonState extends State<_ImportAssistantButton> {
+  bool _hover = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return MouseRegion(
+      cursor: SystemMouseCursors.click,
+      onEnter: (_) => setState(() => _hover = true),
+      onExit: (_) => setState(() => _hover = false),
+      child: Tooltip(
+        message: AppLocalizations.of(context)!.characterCardImportButton,
+        child: GestureDetector(
+          onTap: () => importCharacterCardFromPicker(context),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 160),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: _hover
+                  ? cs.onSurface.withValues(alpha: isDark ? 0.06 : 0.05)
+                  : Colors.transparent,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(lucide.Lucide.Import, size: 16, color: cs.primary),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _AddAssistantButtonState extends State<_AddAssistantButton> {

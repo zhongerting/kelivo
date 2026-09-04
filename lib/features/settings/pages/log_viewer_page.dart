@@ -2010,6 +2010,8 @@ Color _contextSourceColor(BuildContext context, ContextSource source) {
   switch (source) {
     case ContextSource.systemPrompt:
       return cs.primary;
+    case ContextSource.characterPrompt:
+      return cs.primaryFixedDim;
     case ContextSource.memoryRules:
     case ContextSource.memorySnapshot:
       return cs.tertiary;
@@ -2033,6 +2035,8 @@ String _contextSourceLabel(AppLocalizations l10n, ContextSource source) {
   switch (source) {
     case ContextSource.systemPrompt:
       return l10n.contextLogSourceSystemPrompt;
+    case ContextSource.characterPrompt:
+      return l10n.contextLogSourceCharacterPrompt;
     case ContextSource.memoryRules:
       return l10n.contextLogSourceMemoryRules;
     case ContextSource.searchPrompt:

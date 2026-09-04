@@ -12,6 +12,7 @@ import 'assistant_settings_edit_page.dart';
 import '../../../utils/avatar_cache.dart';
 import '../../../utils/sandbox_path_resolver.dart';
 import '../../../core/services/haptics.dart';
+import '../../character_card/widgets/character_card_import_report.dart';
 import 'package:flutter_slidable/flutter_slidable.dart';
 import '../../../shared/widgets/snackbar.dart';
 import '../../../theme/app_font_weights.dart';
@@ -40,6 +41,16 @@ class AssistantSettingsPage extends StatelessWidget {
         ),
         title: Text(l10n.assistantSettingsPageTitle),
         actions: [
+          Tooltip(
+            message: l10n.characterCardImportButton,
+            child: _TactileIconButton(
+              icon: Lucide.Import,
+              color: cs.onSurface,
+              size: 21,
+              onTap: () => importCharacterCardFromPicker(context),
+            ),
+          ),
+          const SizedBox(width: 2),
           Tooltip(
             message: l10n.assistantSettingsAddSheetSave,
             child: _TactileIconButton(

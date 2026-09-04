@@ -8,6 +8,7 @@ import '../../../core/models/compress_context_options.dart';
 import '../../../core/models/conversation.dart';
 import '../../../core/providers/assistant_provider.dart';
 import '../../../core/providers/settings_provider.dart';
+import '../../../core/providers/user_provider.dart';
 import '../../../core/services/api/chat_api_service.dart';
 import '../../../core/services/chat/chat_service.dart';
 import '../../../core/services/model_override_payload_parser.dart';
@@ -17,8 +18,10 @@ import '../../../core/services/memory/memory_trace.dart';
 import '../../../utils/utf16_safe_cut.dart';
 import '../../../l10n/app_localizations.dart';
 import '../../chat/widgets/chat_message_widget.dart' show ToolUIPart;
+import '../../chat/utils/thinking_tag_parser.dart';
 import '../services/message_builder_service.dart';
 import '../services/message_generation_service.dart';
+import '../../character_card/services/character_card_macro_service.dart';
 import '../services/chat_suggestion_service.dart';
 import '../utils/model_display_helper.dart';
 import 'chat_actions.dart';
@@ -151,6 +154,12 @@ class HomeViewModel extends ChangeNotifier {
   ChatActions get debugChatActions => _chatActions;
   QueuedChatInput? _queuedInput;
   bool _isDrainingQueuedInput = false;
+
+  /// Serializes opening/preset seeding per conversation. New-conversation
+  /// setup can be re-entered by overlapping UI lifecycle calls, so checking
+  /// the message cache alone is not an atomic once-only guard.
+  final Map<String, Future<void>> _conversationSeedFutures =
+      <String, Future<void>>{};
 
   /// Function to get localized title
   final String Function(BuildContext context) getTitleForLocale;
@@ -990,37 +999,122 @@ class HomeViewModel extends ChangeNotifier {
     _streamController.clearAllState();
     notifyListeners();
 
-    // Inject assistant preset messages into new conversation (ordered)
-    try {
-      final presets = ap.getPresetMessagesForAssistant(a?.id);
-      if (presets.isNotEmpty && currentConversation != null) {
-        final injected = <ChatMessage>[];
-        for (final pm in presets) {
-          final role = (pm['role'] == 'assistant') ? 'assistant' : 'user';
-          final content = (pm['content'] ?? '').trim();
-          if (content.isEmpty) continue;
-          injected.add(
-            await _chatService.addMessage(
-              conversationId: currentConversation!.id,
-              role: role,
-              content: content,
-            ),
-          );
-        }
-        // One batch append publishes the whole preset block with a single
-        // notify instead of one per message.
-        if (injected.isNotEmpty) {
-          await _chatController.appendPersistedTailMessages(injected);
-        }
-      }
-    } catch (_) {}
+    await _seedNewConversationMessages(
+      conversation,
+      a,
+      includePresetMessages: true,
+    );
 
     onScrollToBottom?.call();
   }
 
+  /// Adds the RP opening message before the legacy assistant preset block.
+  ///
+  /// Drafts normally have no persisted messages. The existing-message guard is
+  /// also intentional: it makes this helper idempotent if a caller retries
+  /// setup after the first message has already been written.
+  Future<void> _seedNewConversationMessages(
+    Conversation targetConversation,
+    Assistant? assistant, {
+    required bool includePresetMessages,
+  }) {
+    final existing = _conversationSeedFutures[targetConversation.id];
+    if (existing != null) return existing;
+
+    final future = _seedNewConversationMessagesImpl(
+      targetConversation,
+      assistant,
+      includePresetMessages: includePresetMessages,
+    );
+    _conversationSeedFutures[targetConversation.id] = future;
+    return future.whenComplete(() {
+      if (identical(_conversationSeedFutures[targetConversation.id], future)) {
+        _conversationSeedFutures.remove(targetConversation.id);
+      }
+    });
+  }
+
+  Future<void> _seedNewConversationMessagesImpl(
+    Conversation conversation,
+    Assistant? assistant, {
+    required bool includePresetMessages,
+  }) async {
+    // This second check runs inside the per-conversation critical section.
+    if (_chatService.getMessages(conversation.id).isNotEmpty) return;
+
+    final userName = _contextProvider.read<UserProvider?>()?.name ?? '';
+    final initial = <({String role, String content})>[];
+    if (assistant?.mode == AssistantMode.roleplay) {
+      final renderedOpening = CharacterCardMacroService.render(
+        assistant!.firstMessage,
+        charName: assistant.name,
+        userName: userName,
+      );
+      if (renderedOpening.trim().isNotEmpty) {
+        initial.add((role: 'assistant', content: renderedOpening));
+      }
+    }
+
+    if (includePresetMessages) {
+      final presets = assistant == null
+          ? const <Map<String, String>>[]
+          : _contextProvider
+                .read<AssistantProvider>()
+                .getPresetMessagesForAssistant(assistant.id);
+      for (final preset in presets) {
+        final content = (preset['content'] ?? '').trim();
+        if (content.isEmpty) continue;
+        initial.add((
+          role: preset['role'] == 'assistant' ? 'assistant' : 'user',
+          content: content,
+        ));
+      }
+    }
+    if (initial.isEmpty) return;
+
+    final injected = <ChatMessage>[];
+    for (final item in initial) {
+      injected.add(
+        await _chatService.addMessage(
+          conversationId: conversation.id,
+          role: item.role,
+          content: item.content,
+        ),
+      );
+    }
+    await _chatController.appendPersistedTailMessages(injected);
+  }
+
+  bool _conversationHasOnlyOpeningMessage(Conversation conversation) {
+    if (messages.length != 1 || messages.first.role != 'assistant') {
+      return false;
+    }
+    final assistantId = conversation.assistantId;
+    final assistant = assistantId == null
+        ? _contextProvider.read<AssistantProvider>().currentAssistant
+        : _contextProvider.read<AssistantProvider>().getById(assistantId);
+    if (assistant?.mode != AssistantMode.roleplay) return false;
+    final userName = _contextProvider.read<UserProvider?>()?.name ?? '';
+    final opening = CharacterCardMacroService.render(
+      assistant!.firstMessage,
+      charName: assistant.name,
+      userName: userName,
+    ).trim();
+    return opening.isNotEmpty && messages.first.content.trim() == opening;
+  }
+
+  bool get canToggleTemporaryConversation {
+    final conversation = currentConversation;
+    if (conversation == null) return false;
+    return messages.isEmpty || _conversationHasOnlyOpeningMessage(conversation);
+  }
+
   Future<void> toggleTemporaryConversation() async {
     final convo = currentConversation;
-    if (convo == null || messages.isNotEmpty) return;
+    if (convo == null ||
+        (messages.isNotEmpty && !_conversationHasOnlyOpeningMessage(convo))) {
+      return;
+    }
 
     await _chatActions.flushConversationProgress(currentConversation);
     if (!_contextProvider.mounted) return;
@@ -1049,6 +1143,11 @@ class HomeViewModel extends ChangeNotifier {
     _chatController.setDraftConversation(conversation);
     _streamController.clearAllState();
     notifyListeners();
+    await _seedNewConversationMessages(
+      conversation,
+      ap.currentAssistant,
+      includePresetMessages: false,
+    );
     onScrollToBottom?.call();
   }
 
@@ -1512,7 +1611,16 @@ class HomeViewModel extends ChangeNotifier {
 
     // Build content from messages (shared with the side drawer title path;
     // both cache and paging paths collect the same ~3000-char tail window)
-    final content = await _chatService.generateTitleSource(convo.id);
+    final content = await _chatService.generateTitleSource(
+      convo.id,
+      contentTransform: assistant?.excludeThinkingFromContext == true
+          ? (message) => message.role == 'assistant'
+                ? ThinkingTagParser.parseWithRanges(
+                    message.content,
+                  ).visibleContent
+                : message.content
+          : null,
+    );
 
     String prompt = settings.titlePrompt
         .replaceAll('{locale}', locale)

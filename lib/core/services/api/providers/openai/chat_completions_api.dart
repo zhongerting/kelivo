@@ -295,6 +295,7 @@ Future<List<Map<String, dynamic>>> buildOpenAIChatCompletionMessages(
     outMsg.remove(multimodalInternalMediaPathsKey);
     outMsg.remove(multimodalInternalDocumentPathsKey);
     outMsg.remove(multimodalInternalRevisionIdKey);
+    outMsg.remove(multimodalInternalMessageIdKey);
     outMsg.remove(multimodalInternalClaudeContainerKey);
     outMsg.remove(multimodalInternalClaudeTurnKey);
     outMsg.remove(multimodalInternalGeminiThoughtSignatureKey);

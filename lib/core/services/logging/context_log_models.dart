@@ -9,6 +9,7 @@ const String kelivoContextSegmentsKey = '_kelivo_ctx_segments';
 
 enum ContextSource {
   systemPrompt,
+  characterPrompt,
   memoryRules,
   searchPrompt,
   instructionInjection,

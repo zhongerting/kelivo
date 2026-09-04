@@ -241,6 +241,7 @@ Stream<StreamChunk> sendGoogleVertexClaudeStream({
     nonSystemMessages.add(
       Map<String, dynamic>.from(m)
         ..remove(multimodalInternalRevisionIdKey)
+        ..remove(multimodalInternalMessageIdKey)
         ..remove(multimodalInternalClaudeContainerKey)
         ..remove(multimodalInternalClaudeTurnKey)
         ..remove(multimodalInternalGeminiThoughtSignatureKey)

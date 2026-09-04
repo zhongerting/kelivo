@@ -12,6 +12,18 @@ enum MemoryWriteScope {
   toolDefaultAssistant,
 }
 
+enum AssistantMode { normal, roleplay }
+
+extension AssistantModeJson on AssistantMode {
+  static AssistantMode fromJson(Object? value) {
+    return (value ?? '').toString().trim().toLowerCase() == 'roleplay'
+        ? AssistantMode.roleplay
+        : AssistantMode.normal;
+  }
+
+  String toJson() => name;
+}
+
 class Assistant {
   static const int defaultRecentChatsSummaryMessageCount = 5;
   static const int defaultMemoryOrganizeEveryNTurns = 1;
@@ -73,6 +85,10 @@ class Assistant {
   final List<PresetMessage> presetMessages;
   // Regex replacement rules
   final List<AssistantRegex> regexRules;
+  final AssistantMode mode;
+  final String characterPrompt;
+  final String firstMessage;
+  final bool excludeThinkingFromContext;
 
   const Assistant({
     required this.id,
@@ -109,6 +125,10 @@ class Assistant {
     this.appendCurrentTimeToUserMessage = false,
     this.presetMessages = const <PresetMessage>[],
     this.regexRules = const <AssistantRegex>[],
+    this.mode = AssistantMode.normal,
+    this.characterPrompt = '',
+    this.firstMessage = '',
+    this.excludeThinkingFromContext = false,
   });
 
   Assistant copyWith({
@@ -146,6 +166,10 @@ class Assistant {
     bool? appendCurrentTimeToUserMessage,
     List<PresetMessage>? presetMessages,
     List<AssistantRegex>? regexRules,
+    AssistantMode? mode,
+    String? characterPrompt,
+    String? firstMessage,
+    bool? excludeThinkingFromContext,
     bool clearChatModel = false,
     bool clearAvatar = false,
     bool clearTemperature = false,
@@ -198,6 +222,11 @@ class Assistant {
           appendCurrentTimeToUserMessage ?? this.appendCurrentTimeToUserMessage,
       presetMessages: presetMessages ?? this.presetMessages,
       regexRules: regexRules ?? this.regexRules,
+      mode: mode ?? this.mode,
+      characterPrompt: characterPrompt ?? this.characterPrompt,
+      firstMessage: firstMessage ?? this.firstMessage,
+      excludeThinkingFromContext:
+          excludeThinkingFromContext ?? this.excludeThinkingFromContext,
     );
   }
 
@@ -236,6 +265,10 @@ class Assistant {
     'appendCurrentTimeToUserMessage': appendCurrentTimeToUserMessage,
     'presetMessages': PresetMessage.encodeList(presetMessages),
     'regexRules': regexRules.map((e) => e.toJson()).toList(),
+    'mode': mode.toJson(),
+    'characterPrompt': characterPrompt,
+    'firstMessage': firstMessage,
+    'excludeThinkingFromContext': excludeThinkingFromContext,
   };
 
   static Assistant fromJson(Map<String, dynamic> json) => Assistant(
@@ -344,6 +377,11 @@ class Assistant {
       }
       return const <AssistantRegex>[];
     })(),
+    mode: AssistantModeJson.fromJson(json['mode']),
+    characterPrompt: (json['characterPrompt'] as String?) ?? '',
+    firstMessage: (json['firstMessage'] as String?) ?? '',
+    excludeThinkingFromContext:
+        json['excludeThinkingFromContext'] as bool? ?? false,
   );
 
   static String memorySmartAddModeToString(MemorySmartAddMode mode) {

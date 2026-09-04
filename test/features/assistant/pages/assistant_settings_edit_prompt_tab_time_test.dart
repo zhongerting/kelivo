@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import "../../../support/business_test_harness.dart";
 import 'package:flutter/material.dart';
@@ -70,6 +71,10 @@ _createAssistantProvider(
   WidgetTester tester, {
   String systemPrompt = '',
   bool appendCurrentTimeToUserMessage = false,
+  AssistantMode mode = AssistantMode.normal,
+  String characterPrompt = '',
+  String firstMessage = '',
+  FutureOr<void> Function(String, Object?)? writeInterceptor,
 }) async {
   final tempDir = await tester.runAsync(
     () => Directory.systemTemp.createTemp('kelivo_asst_edit_'),
@@ -92,9 +97,13 @@ _createAssistantProvider(
           temperature: 0.6,
           systemPrompt: systemPrompt,
           appendCurrentTimeToUserMessage: appendCurrentTimeToUserMessage,
+          mode: mode,
+          characterPrompt: characterPrompt,
+          firstMessage: firstMessage,
         ),
       ]),
     },
+    writeInterceptor: writeInterceptor,
   );
   final chatRepository = ChatDatabaseRepository(harness.database);
   await chatRepository.ensureReady();
@@ -194,6 +203,24 @@ Finder _systemPromptField() {
     (widget) =>
         widget is TextField &&
         (widget.decoration?.hintText?.contains('system prompt') ?? false),
+  );
+}
+
+Finder _characterPromptField() {
+  return find.byWidgetPredicate(
+    (widget) =>
+        widget is TextField &&
+        widget.decoration?.hintText ==
+            'Description, personality, and scenario…',
+  );
+}
+
+Finder _firstMessageField() {
+  return find.byWidgetPredicate(
+    (widget) =>
+        widget is TextField &&
+        widget.decoration?.hintText ==
+            'The first assistant message in each new conversation…',
   );
 }
 
@@ -367,5 +394,81 @@ void main() {
 
     expect(find.text('Appended time format'), findsWidgets);
     expect(find.textContaining(_formatExample), findsOneWidget);
+  });
+
+  testWidgets('RP long text saves with debounce and flushes before leaving', (
+    tester,
+  ) async {
+    final writes = <String>[];
+    final bundle = await _createAssistantProvider(
+      tester,
+      mode: AssistantMode.roleplay,
+      writeInterceptor: (key, value) {
+        if (key == 'assistants_v1') writes.add(value.toString());
+      },
+    );
+    final assistantProvider = bundle.assistantProvider;
+    _setLargeSurface(tester);
+    await tester.pumpWidget(
+      _buildHarness(
+        assistantProvider: assistantProvider,
+        chatService: bundle.chatService,
+        memoryV2: bundle.memoryV2,
+        pipeline: bundle.pipeline,
+        child: const AssistantSettingsEditPage(assistantId: _assistantId),
+      ),
+    );
+    await _openPromptsTab(tester);
+
+    const characterText = 'A character with a deliberately long description.';
+    var current = '';
+    for (final character in characterText.split('')) {
+      current += character;
+      await tester.enterText(_characterPromptField(), current);
+    }
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(writes.length, lessThan(characterText.length));
+
+    writes.clear();
+    const finalCharacterText = '$characterText!';
+    await tester.enterText(_characterPromptField(), finalCharacterText);
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(writes, isEmpty);
+
+    final popGuard = tester.widget<PopScope<Object?>>(
+      find.byType(PopScope<Object?>),
+    );
+    expect(popGuard.canPop, isFalse);
+    popGuard.onPopInvokedWithResult?.call(false, null);
+    await tester.pump();
+    expect(writes, hasLength(1));
+    expect(
+      assistantProvider.getById(_assistantId)!.characterPrompt,
+      finalCharacterText,
+    );
+
+    const firstMessage =
+        'The opening message is also saved as one final value.';
+    current = '';
+    for (final character in firstMessage.split('')) {
+      current += character;
+      await tester.enterText(_firstMessageField(), current);
+    }
+    await tester.pump(const Duration(milliseconds: 50));
+    expect(writes, hasLength(1));
+
+    final secondPopGuard = tester.widget<PopScope<Object?>>(
+      find.byType(PopScope<Object?>),
+    );
+    expect(secondPopGuard.canPop, isFalse);
+    secondPopGuard.onPopInvokedWithResult?.call(false, null);
+    await tester.pump();
+    expect(writes, hasLength(2));
+    final saved = assistantProvider.getById(_assistantId)!;
+    expect(saved.firstMessage, firstMessage);
+    expect(
+      assistantProvider.preferences.getString('assistants_v1'),
+      contains(firstMessage),
+    );
   });
 }

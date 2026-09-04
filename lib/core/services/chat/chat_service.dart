@@ -1299,7 +1299,10 @@ class ChatService extends ChangeNotifier {
   /// honoring the conversation's logical truncateIndex) identically on both
   /// paths: served from the cache when the conversation is fully cached,
   /// otherwise paged from the selected logical timeline.
-  Future<String> generateTitleSource(String conversationId) async {
+  Future<String> generateTitleSource(
+    String conversationId, {
+    String Function(ChatMessage message)? contentTransform,
+  }) async {
     if (!_initialized) return '';
     if (_conversationForMessages(conversationId) == null) return '';
     final truncateIndex = getContextStartIndex(conversationId);
@@ -1322,12 +1325,13 @@ class ChatService extends ChangeNotifier {
     }
 
     final joined = source
-        .where((message) => message.content.isNotEmpty)
-        .map(
-          (message) =>
-              '${message.role == 'assistant' ? 'Assistant' : 'User'}: '
-              '${message.content}',
-        )
+        .map((message) {
+          final content = contentTransform?.call(message) ?? message.content;
+          if (content.isEmpty) return null;
+          return '${message.role == 'assistant' ? 'Assistant' : 'User'}: '
+              '$content';
+        })
+        .whereType<String>()
         .join('\n\n');
     return joined.length > _titleSourceMaxChars
         ? joined.substring(0, _titleSourceMaxChars)

@@ -259,6 +259,37 @@ void main() {
 
   group('generateTitleSource', () {
     test(
+      'supports a sending copy transform without mutating history',
+      () async {
+        final service = createService();
+        await service.init();
+        final conversation = await service.createConversation(title: 'Chat');
+        await service.addMessage(
+          conversationId: conversation.id,
+          role: 'user',
+          content: 'hello',
+        );
+        final assistant = await service.addMessage(
+          conversationId: conversation.id,
+          role: 'assistant',
+          content: '<think>private plan</think>visible answer',
+        );
+
+        final source = await service.generateTitleSource(
+          conversation.id,
+          contentTransform: (message) =>
+              message.content.replaceFirst('<think>private plan</think>', ''),
+        );
+
+        expect(source, 'User: hello\n\nAssistant: visible answer');
+        expect(
+          service.getMessages(conversation.id).last.content,
+          assistant.content,
+        );
+      },
+    );
+
+    test(
       'serves a fully cached conversation with version collapsing',
       () async {
         final service = createService();

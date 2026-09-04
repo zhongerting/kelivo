@@ -91,6 +91,7 @@ Stream<StreamChunk> sendClaudeStream(
     nonSystemMessages.add(
       Map<String, dynamic>.from(m)
         ..remove(multimodalInternalRevisionIdKey)
+        ..remove(multimodalInternalMessageIdKey)
         ..remove(multimodalInternalGeminiThoughtSignatureKey)
         ..['role'] = role.isEmpty ? 'user' : role,
     );

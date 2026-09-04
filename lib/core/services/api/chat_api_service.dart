@@ -104,6 +104,7 @@ class ChatApiService {
       final copy = Map<String, dynamic>.from(message);
       copy.remove(multimodalInternalMediaPathsKey);
       copy.remove(multimodalInternalRevisionIdKey);
+      copy.remove(multimodalInternalMessageIdKey);
       copy.remove(kelivoContextSegmentsKey);
       if (copy.containsKey('content')) {
         copy['content'] = await _stripImageInputsFromContent(copy['content']);

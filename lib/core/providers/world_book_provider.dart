@@ -178,9 +178,9 @@ class WorldBookProvider with ChangeNotifier {
     final key = WorldBookStore.assistantKey(assistantId);
     final nextMap = Map<String, List<String>>.from(_activeIdsByAssistant);
     nextMap[key] = ids.toSet().toList(growable: false);
+    await _store.setActiveIds(ids, assistantId: assistantId);
     _activeIdsByAssistant = nextMap;
     notifyListeners();
-    await _store.setActiveIds(ids, assistantId: assistantId);
   }
 
   Future<void> toggleActiveBookId(String id, {String? assistantId}) async {

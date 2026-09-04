@@ -9133,4 +9133,90 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get contextLogSourcePromptPreset => 'Prompt preset';
+
+  @override
+  String get characterCardImportButton => 'Import character card';
+
+  @override
+  String get characterCardImportReportTitle => 'Character card import report';
+
+  @override
+  String characterCardImportSource(String format, String version) {
+    return 'Source: $format, spec $version';
+  }
+
+  @override
+  String get characterCardImportFieldsTitle => 'Imported fields';
+
+  @override
+  String get characterCardImportCharacterPrompt => 'Character description';
+
+  @override
+  String get characterCardImportFirstMessage => 'Opening message';
+
+  @override
+  String get characterCardImportWorldBook => 'Embedded world book';
+
+  @override
+  String get characterCardImportIgnoredFields => 'Ignored fields';
+
+  @override
+  String get characterCardImportWorldBookSummaryTitle =>
+      'World-book conversion';
+
+  @override
+  String characterCardImportWorldBookSummary(
+    int total,
+    int enabled,
+    int disabled,
+    int skipped,
+  ) {
+    return 'Entries: $total total, $enabled enabled, $disabled disabled, $skipped skipped.';
+  }
+
+  @override
+  String get characterCardImportWarnings => 'Warnings';
+
+  @override
+  String get characterCardImportNone => 'None';
+
+  @override
+  String get characterCardImportClose => 'Close';
+
+  @override
+  String characterCardImportFailed(String error) {
+    return 'Character card import failed: $error';
+  }
+
+  @override
+  String get assistantEditRoleplayModeTitle => 'Roleplay assistant';
+
+  @override
+  String get assistantEditRoleplayModeSubtitle =>
+      'Character settings and the opening message are stored separately from the system prompt.';
+
+  @override
+  String get assistantEditCharacterPromptTitle => 'Character settings';
+
+  @override
+  String get assistantEditCharacterPromptHint =>
+      'Description, personality, and scenario…';
+
+  @override
+  String get assistantEditFirstMessageTitle => 'Opening message';
+
+  @override
+  String get assistantEditFirstMessageHint =>
+      'The first assistant message in each new conversation…';
+
+  @override
+  String get assistantEditExcludeThinkingTitle =>
+      'Exclude past reasoning from future context';
+
+  @override
+  String get assistantEditExcludeThinkingSubtitle =>
+      'Keep reasoning visible locally, but send only completed answers from earlier turns.';
+
+  @override
+  String get contextLogSourceCharacterPrompt => 'Character settings';
 }

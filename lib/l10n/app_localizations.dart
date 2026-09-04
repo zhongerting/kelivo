@@ -16402,6 +16402,149 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Prompt preset'**
   String get contextLogSourcePromptPreset;
+
+  /// No description provided for @characterCardImportButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Import character card'**
+  String get characterCardImportButton;
+
+  /// No description provided for @characterCardImportReportTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Character card import report'**
+  String get characterCardImportReportTitle;
+
+  /// No description provided for @characterCardImportSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Source: {format}, spec {version}'**
+  String characterCardImportSource(String format, String version);
+
+  /// No description provided for @characterCardImportFieldsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported fields'**
+  String get characterCardImportFieldsTitle;
+
+  /// No description provided for @characterCardImportCharacterPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Character description'**
+  String get characterCardImportCharacterPrompt;
+
+  /// No description provided for @characterCardImportFirstMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening message'**
+  String get characterCardImportFirstMessage;
+
+  /// No description provided for @characterCardImportWorldBook.
+  ///
+  /// In en, this message translates to:
+  /// **'Embedded world book'**
+  String get characterCardImportWorldBook;
+
+  /// No description provided for @characterCardImportIgnoredFields.
+  ///
+  /// In en, this message translates to:
+  /// **'Ignored fields'**
+  String get characterCardImportIgnoredFields;
+
+  /// No description provided for @characterCardImportWorldBookSummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'World-book conversion'**
+  String get characterCardImportWorldBookSummaryTitle;
+
+  /// No description provided for @characterCardImportWorldBookSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Entries: {total} total, {enabled} enabled, {disabled} disabled, {skipped} skipped.'**
+  String characterCardImportWorldBookSummary(
+    int total,
+    int enabled,
+    int disabled,
+    int skipped,
+  );
+
+  /// No description provided for @characterCardImportWarnings.
+  ///
+  /// In en, this message translates to:
+  /// **'Warnings'**
+  String get characterCardImportWarnings;
+
+  /// No description provided for @characterCardImportNone.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get characterCardImportNone;
+
+  /// No description provided for @characterCardImportClose.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get characterCardImportClose;
+
+  /// No description provided for @characterCardImportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Character card import failed: {error}'**
+  String characterCardImportFailed(String error);
+
+  /// No description provided for @assistantEditRoleplayModeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Roleplay assistant'**
+  String get assistantEditRoleplayModeTitle;
+
+  /// No description provided for @assistantEditRoleplayModeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Character settings and the opening message are stored separately from the system prompt.'**
+  String get assistantEditRoleplayModeSubtitle;
+
+  /// No description provided for @assistantEditCharacterPromptTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Character settings'**
+  String get assistantEditCharacterPromptTitle;
+
+  /// No description provided for @assistantEditCharacterPromptHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Description, personality, and scenario…'**
+  String get assistantEditCharacterPromptHint;
+
+  /// No description provided for @assistantEditFirstMessageTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Opening message'**
+  String get assistantEditFirstMessageTitle;
+
+  /// No description provided for @assistantEditFirstMessageHint.
+  ///
+  /// In en, this message translates to:
+  /// **'The first assistant message in each new conversation…'**
+  String get assistantEditFirstMessageHint;
+
+  /// No description provided for @assistantEditExcludeThinkingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Exclude past reasoning from future context'**
+  String get assistantEditExcludeThinkingTitle;
+
+  /// No description provided for @assistantEditExcludeThinkingSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep reasoning visible locally, but send only completed answers from earlier turns.'**
+  String get assistantEditExcludeThinkingSubtitle;
+
+  /// No description provided for @contextLogSourceCharacterPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Character settings'**
+  String get contextLogSourceCharacterPrompt;
 }
 
 class _AppLocalizationsDelegate

@@ -7,6 +7,11 @@ import '../../utils/sandbox_path_resolver.dart';
 const String multimodalInternalMediaPathsKey = '_kelivo_media_paths';
 const String multimodalInternalRevisionIdKey = '_kelivo_revision_id';
 
+/// Internal identity for an assistant history message. It is used only while
+/// the canonical context is assembled, so the active streaming/tool turn can
+/// be protected from historical reasoning cleanup.
+const String multimodalInternalMessageIdKey = '_kelivo_message_id';
+
 /// Internal message key listing a user message's document attachments as
 /// `{uri, name, mime}` entries — the `FilePart`s that are not images, audio
 /// or video. They normally reach the model as extracted text; this key lets a

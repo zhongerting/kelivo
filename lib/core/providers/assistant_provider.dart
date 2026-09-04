@@ -9,6 +9,8 @@ import '../database/business_preferences.dart';
 import '../models/assistant.dart';
 import '../models/assistant_regex.dart';
 import '../models/preset_message.dart';
+import 'prompt_preset_provider.dart';
+import 'world_book_provider.dart';
 import '../services/chat/chat_service.dart';
 import '../../l10n/app_localizations.dart';
 import '../../utils/avatar_cache.dart';
@@ -22,6 +24,8 @@ class AssistantProvider extends ChangeNotifier {
   final List<Assistant> _assistants = <Assistant>[];
   String? _currentAssistantId;
   final ChatService? chatService;
+  final PromptPresetProvider? promptPresetProvider;
+  final WorldBookProvider? worldBookProvider;
 
   List<Assistant> get assistants => List.unmodifiable(_assistants);
   String? get currentAssistantId => _currentAssistantId;
@@ -34,7 +38,12 @@ class AssistantProvider extends ChangeNotifier {
 
   bool get currentSearchEnabled => currentAssistant?.searchEnabled ?? false;
 
-  AssistantProvider({required this.preferences, this.chatService}) {
+  AssistantProvider({
+    required this.preferences,
+    this.chatService,
+    this.promptPresetProvider,
+    this.worldBookProvider,
+  }) {
     loaded = _load();
   }
 
@@ -275,12 +284,102 @@ class AssistantProvider extends ChangeNotifier {
     );
   }
 
+  Future<void> _restoreStoredPreference(
+    String key, {
+    required bool existed,
+    required Object? value,
+  }) async {
+    if (!existed) {
+      await preferences.remove(key);
+      return;
+    }
+    if (value is! String) {
+      throw StateError('assistant_restore_invalid_preference:$key');
+    }
+    await preferences.setString(key, value);
+  }
+
+  Future<List<String>> _restoreAssistantSnapshot({
+    required List<Assistant> assistants,
+    required String? currentAssistantId,
+    required bool persistedAssistants,
+    required Object? persistedAssistantsValue,
+    required bool persistedCurrentAssistant,
+    required Object? persistedCurrentAssistantValue,
+  }) async {
+    _assistants
+      ..clear()
+      ..addAll(assistants);
+    _currentAssistantId = currentAssistantId;
+
+    final errors = <String>[];
+    try {
+      await _restoreStoredPreference(
+        _assistantsKey,
+        existed: persistedAssistants,
+        value: persistedAssistantsValue,
+      );
+    } catch (error) {
+      errors.add('assistants: $error');
+    }
+    try {
+      await _restoreStoredPreference(
+        _currentAssistantKey,
+        existed: persistedCurrentAssistant,
+        value: persistedCurrentAssistantValue,
+      );
+    } catch (error) {
+      errors.add('current_assistant: $error');
+    }
+    return errors;
+  }
+
   Future<void> setCurrentAssistant(String id) async {
     await loaded;
     if (_currentAssistantId == id) return;
+    await preferences.setString(_currentAssistantKey, id);
     _currentAssistantId = id;
     notifyListeners();
-    await preferences.setString(_currentAssistantKey, id);
+  }
+
+  /// Restores a previously selected assistant during a failed cross-provider
+  /// import. A null value removes the persisted selection as well.
+  Future<void> restoreCurrentAssistantId(String? id) async {
+    await loaded;
+    final previousId = _currentAssistantId;
+    final persisted = preferences.containsKey(_currentAssistantKey);
+    final persistedValue = preferences.get(_currentAssistantKey);
+    try {
+      await _restoreStoredPreference(
+        _currentAssistantKey,
+        existed: id != null,
+        value: id,
+      );
+      _currentAssistantId = id;
+      if (previousId != id) notifyListeners();
+    } catch (error, stackTrace) {
+      _currentAssistantId = previousId;
+      final rollbackErrors = <String>[];
+      try {
+        await _restoreStoredPreference(
+          _currentAssistantKey,
+          existed: persisted,
+          value: persistedValue,
+        );
+      } catch (rollbackError) {
+        rollbackErrors.add('current_assistant: $rollbackError');
+      }
+      if (rollbackErrors.isEmpty) {
+        Error.throwWithStackTrace(error, stackTrace);
+      }
+      Error.throwWithStackTrace(
+        StateError(
+          'Assistant current ID restore failed: $error; '
+          'rollback failed: ${rollbackErrors.join('; ')}',
+        ),
+        stackTrace,
+      );
+    }
   }
 
   Assistant? getById(String id) {
@@ -304,6 +403,7 @@ class AssistantProvider extends ChangeNotifier {
   }
 
   Future<String> addAssistant({String? name, dynamic context}) async {
+    await loaded;
     final a = Assistant(
       id: const Uuid().v4(),
       name:
@@ -321,6 +421,108 @@ class AssistantProvider extends ChangeNotifier {
     return a.id;
   }
 
+  /// Add a fully materialized assistant produced by an import flow.
+  ///
+  /// Importers use this after all parsing and asset preparation has succeeded,
+  /// so a partially parsed character card can never enter the normal list.
+  Future<void> addAssistantObject(
+    Assistant assistant, {
+    bool select = false,
+  }) async {
+    await loaded;
+    if (_assistants.any((item) => item.id == assistant.id)) {
+      throw StateError('assistant_id_already_exists');
+    }
+    final previousAssistants = List<Assistant>.of(_assistants);
+    final previousCurrentAssistantId = _currentAssistantId;
+    final persistedAssistants = preferences.containsKey(_assistantsKey);
+    final persistedAssistantsValue = preferences.get(_assistantsKey);
+    final persistedCurrentAssistant = preferences.containsKey(
+      _currentAssistantKey,
+    );
+    final persistedCurrentAssistantValue = preferences.get(
+      _currentAssistantKey,
+    );
+
+    try {
+      _assistants.add(assistant);
+      await _persist();
+      if (select) {
+        await preferences.setString(_currentAssistantKey, assistant.id);
+        _currentAssistantId = assistant.id;
+      }
+      notifyListeners();
+    } catch (error, stackTrace) {
+      final rollbackErrors = await _restoreAssistantSnapshot(
+        assistants: previousAssistants,
+        currentAssistantId: previousCurrentAssistantId,
+        persistedAssistants: persistedAssistants,
+        persistedAssistantsValue: persistedAssistantsValue,
+        persistedCurrentAssistant: persistedCurrentAssistant,
+        persistedCurrentAssistantValue: persistedCurrentAssistantValue,
+      );
+      if (rollbackErrors.isEmpty) {
+        Error.throwWithStackTrace(error, stackTrace);
+      }
+      Error.throwWithStackTrace(
+        StateError(
+          'Assistant add failed: $error; '
+          'rollback failed: ${rollbackErrors.join('; ')}',
+        ),
+        stackTrace,
+      );
+    }
+  }
+
+  /// Roll back an assistant created by an import before it becomes user data.
+  Future<bool> removeAssistantObject(String id) async {
+    await loaded;
+    final index = _assistants.indexWhere((item) => item.id == id);
+    if (index < 0) return false;
+    final previousAssistants = List<Assistant>.of(_assistants);
+    final previousCurrentAssistantId = _currentAssistantId;
+    final persistedAssistants = preferences.containsKey(_assistantsKey);
+    final persistedAssistantsValue = preferences.get(_assistantsKey);
+    final persistedCurrentAssistant = preferences.containsKey(
+      _currentAssistantKey,
+    );
+    final persistedCurrentAssistantValue = preferences.get(
+      _currentAssistantKey,
+    );
+
+    try {
+      _assistants.removeAt(index);
+      if (_currentAssistantId == id) {
+        _currentAssistantId = _assistants.isEmpty ? null : _assistants.first.id;
+      }
+      await _persist();
+      if (_currentAssistantId != previousCurrentAssistantId) {
+        await restoreCurrentAssistantId(_currentAssistantId);
+      }
+      notifyListeners();
+      return true;
+    } catch (error, stackTrace) {
+      final rollbackErrors = await _restoreAssistantSnapshot(
+        assistants: previousAssistants,
+        currentAssistantId: previousCurrentAssistantId,
+        persistedAssistants: persistedAssistants,
+        persistedAssistantsValue: persistedAssistantsValue,
+        persistedCurrentAssistant: persistedCurrentAssistant,
+        persistedCurrentAssistantValue: persistedCurrentAssistantValue,
+      );
+      if (rollbackErrors.isEmpty) {
+        Error.throwWithStackTrace(error, stackTrace);
+      }
+      Error.throwWithStackTrace(
+        StateError(
+          'Assistant remove failed: $error; '
+          'rollback failed: ${rollbackErrors.join('; ')}',
+        ),
+        stackTrace,
+      );
+    }
+  }
+
   Future<String?> duplicateAssistant(
     String id, {
     AppLocalizations? l10n,
@@ -329,6 +531,10 @@ class AssistantProvider extends ChangeNotifier {
     if (idx == -1) return null;
     final source = _assistants[idx];
     final newId = const Uuid().v4();
+    final activeWorldBookIds = worldBookProvider?.activeBookIdsFor(id);
+    final selectedPromptPresetId = promptPresetProvider?.selectedPresetIdFor(
+      id,
+    );
 
     final avatarCopy = await _duplicateLocalFile(
       source.avatar,
@@ -376,6 +582,22 @@ class AssistantProvider extends ChangeNotifier {
 
     _assistants.insert(idx + 1, copy);
     await _persist();
+    if (activeWorldBookIds != null && activeWorldBookIds.isNotEmpty) {
+      try {
+        await worldBookProvider!.setActiveBookIds(
+          activeWorldBookIds,
+          assistantId: newId,
+        );
+      } catch (_) {}
+    }
+    if (selectedPromptPresetId != null) {
+      try {
+        await promptPresetProvider!.setSelectedPresetId(
+          newId,
+          selectedPromptPresetId,
+        );
+      } catch (_) {}
+    }
     notifyListeners();
     return copy.id;
   }
@@ -487,6 +709,15 @@ class AssistantProvider extends ChangeNotifier {
     if (_assistants.length <= 1) return false;
 
     await chatService?.deleteConversationsForAssistant(id);
+    try {
+      await worldBookProvider?.setActiveBookIds(
+        const <String>[],
+        assistantId: id,
+      );
+    } catch (_) {}
+    try {
+      await promptPresetProvider?.setSelectedPresetId(id, null);
+    } catch (_) {}
 
     final removingCurrent = _assistants[idx].id == _currentAssistantId;
     _assistants.removeAt(idx);
