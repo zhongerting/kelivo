@@ -6094,6 +6094,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Read a one-shot location from this device, requires the location permission.';
 
   @override
+  String get assistantEditLocationPermissionSettingsMessage =>
+      'Location permission is blocked. Allow location access in system settings, then turn this tool on again.';
+
+  @override
   String get assistantEditLocalToolWeatherTitle => 'Weather';
 
   @override
@@ -6202,7 +6206,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthDataSettingsTypeSleepTitle => 'Sleep';
 
   @override
-  String get healthDataSettingsTypeSleepSubtitle => 'Sleep duration last night';
+  String get healthDataSettingsTypeSleepSubtitle =>
+      'Past 24 hours: sleep, time in bed, awake periods and sleep stages';
 
   @override
   String get healthDataSettingsTypeMindfulnessTitle => 'Resting';
@@ -8978,4 +8983,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get toolSchemaSettingsCancel => 'Cancel';
+
+  @override
+  String get healthDataSettingsCategoryReproductive => 'Reproductive health';
+
+  @override
+  String get healthDataSettingsTypeMenstrualFlowTitle => 'Menstrual flow';
+
+  @override
+  String get healthDataSettingsTypeMenstrualFlowSubtitle =>
+      'Recorded menstrual flow and cycle starts in the past 90 days';
 }
