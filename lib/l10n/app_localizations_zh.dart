@@ -5860,6 +5860,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get assistantEditLocalToolLocationSubtitle => '读取本设备的一次性位置，需要授予定位权限。';
 
   @override
+  String get assistantEditLocationPermissionSettingsMessage =>
+      '定位权限已被禁止。请在系统设置中允许定位访问，然后重新开启此工具。';
+
+  @override
   String get assistantEditLocalToolWeatherTitle => '天气';
 
   @override
@@ -5963,7 +5967,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthDataSettingsTypeSleepTitle => '睡眠';
 
   @override
-  String get healthDataSettingsTypeSleepSubtitle => '睡眠时长';
+  String get healthDataSettingsTypeSleepSubtitle => '最近 24 小时的睡眠、卧床、清醒与睡眠分期';
 
   @override
   String get healthDataSettingsTypeMindfulnessTitle => '静息';
@@ -8604,6 +8608,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get toolSchemaSettingsCancel => '取消';
+
+  @override
+  String get healthDataSettingsCategoryReproductive => '生殖健康';
+
+  @override
+  String get healthDataSettingsTypeMenstrualFlowTitle => '经期记录';
+
+  @override
+  String get healthDataSettingsTypeMenstrualFlowSubtitle =>
+      '最近 90 天记录的经量与周期开始日期';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -14385,6 +14399,10 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get assistantEditLocalToolLocationSubtitle => '读取本设备的一次性位置，需要授予定位权限。';
 
   @override
+  String get assistantEditLocationPermissionSettingsMessage =>
+      '定位权限已被禁止。请在系统设置中允许定位访问，然后重新开启此工具。';
+
+  @override
   String get assistantEditLocalToolWeatherTitle => '天气';
 
   @override
@@ -14488,7 +14506,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get healthDataSettingsTypeSleepTitle => '睡眠';
 
   @override
-  String get healthDataSettingsTypeSleepSubtitle => '睡眠时长';
+  String get healthDataSettingsTypeSleepSubtitle => '最近 24 小时的睡眠、卧床、清醒与睡眠分期';
 
   @override
   String get healthDataSettingsTypeMindfulnessTitle => '静息';
@@ -17109,6 +17127,16 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get toolSchemaSettingsCancel => '取消';
+
+  @override
+  String get healthDataSettingsCategoryReproductive => '生殖健康';
+
+  @override
+  String get healthDataSettingsTypeMenstrualFlowTitle => '经期记录';
+
+  @override
+  String get healthDataSettingsTypeMenstrualFlowSubtitle =>
+      '最近 90 天记录的经量与周期开始日期';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -22965,6 +22993,10 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get assistantEditLocalToolLocationSubtitle => '讀取本裝置的一次性位置，需要授予定位權限。';
 
   @override
+  String get assistantEditLocationPermissionSettingsMessage =>
+      '定位權限已被禁止。請在系統設定中允許定位存取，然後重新開啟此工具。';
+
+  @override
   String get assistantEditLocalToolWeatherTitle => '天氣';
 
   @override
@@ -23068,7 +23100,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get healthDataSettingsTypeSleepTitle => '睡眠';
 
   @override
-  String get healthDataSettingsTypeSleepSubtitle => '睡眠時長';
+  String get healthDataSettingsTypeSleepSubtitle => '最近 24 小時的睡眠、臥床、清醒與睡眠分期';
 
   @override
   String get healthDataSettingsTypeMindfulnessTitle => '靜息';
@@ -25689,4 +25721,14 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get toolSchemaSettingsCancel => '取消';
+
+  @override
+  String get healthDataSettingsCategoryReproductive => '生殖健康';
+
+  @override
+  String get healthDataSettingsTypeMenstrualFlowTitle => '經期記錄';
+
+  @override
+  String get healthDataSettingsTypeMenstrualFlowSubtitle =>
+      '最近 90 天記錄的經量與週期開始日期';
 }

@@ -11167,6 +11167,12 @@ abstract class AppLocalizations {
   /// **'Read a one-shot location from this device, requires the location permission.'**
   String get assistantEditLocalToolLocationSubtitle;
 
+  /// No description provided for @assistantEditLocationPermissionSettingsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is blocked. Allow location access in system settings, then turn this tool on again.'**
+  String get assistantEditLocationPermissionSettingsMessage;
+
   /// No description provided for @assistantEditLocalToolWeatherTitle.
   ///
   /// In en, this message translates to:
@@ -11362,7 +11368,7 @@ abstract class AppLocalizations {
   /// No description provided for @healthDataSettingsTypeSleepSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Sleep duration last night'**
+  /// **'Past 24 hours: sleep, time in bed, awake periods and sleep stages'**
   String get healthDataSettingsTypeSleepSubtitle;
 
   /// No description provided for @healthDataSettingsTypeMindfulnessTitle.
@@ -16176,6 +16182,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cancel'**
   String get toolSchemaSettingsCancel;
+
+  /// No description provided for @healthDataSettingsCategoryReproductive.
+  ///
+  /// In en, this message translates to:
+  /// **'Reproductive health'**
+  String get healthDataSettingsCategoryReproductive;
+
+  /// No description provided for @healthDataSettingsTypeMenstrualFlowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Menstrual flow'**
+  String get healthDataSettingsTypeMenstrualFlowTitle;
+
+  /// No description provided for @healthDataSettingsTypeMenstrualFlowSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded menstrual flow and cycle starts in the past 90 days'**
+  String get healthDataSettingsTypeMenstrualFlowSubtitle;
 }
 
 class _AppLocalizationsDelegate
