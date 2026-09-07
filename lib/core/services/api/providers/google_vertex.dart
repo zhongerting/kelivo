@@ -136,6 +136,7 @@ Future<String?> maybeVertexAccessToken(ProviderConfig cfg) async {
 int _getMaxOutputTokensForClaudeModel(String modelId) {
   // Limits based on Google Vertex AI documentation
   switch (modelId) {
+    case 'claude-fable-5-1':
     case 'claude-fable-5':
     case 'claude-opus-5':
     case 'claude-opus-4-8':
@@ -530,7 +531,7 @@ Stream<StreamChunk> sendGoogleVertexClaudeStream({
         try {
           final u = (obj['usage'] as Map?)?.cast<String, dynamic>();
           if (u != null) {
-            totalUsage = (totalUsage ?? const TokenUsage()).accumulate(
+            totalUsage = (totalUsage ?? const TokenUsage()).merge(
               claudeUsageFromMap(u),
             );
           }
