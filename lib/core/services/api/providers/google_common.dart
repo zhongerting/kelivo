@@ -147,7 +147,15 @@ Map<String, dynamic> _googleThinkingConfig(
 ) {
   final off = isOff(budget);
   if (_isGemma4Model(upstreamModelId)) {
-    if (off) return const <String, dynamic>{};
+    // Official toggle is thinkingLevel high/minimal. Omitting the config
+    // leaves thinking on; off must send minimal.
+    // https://ai.google.dev/gemma/docs/core/gemma_on_gemini_api
+    if (off) {
+      return const <String, dynamic>{
+        'includeThoughts': false,
+        'thinkingLevel': 'minimal',
+      };
+    }
     return const <String, dynamic>{
       'includeThoughts': true,
       'thinkingLevel': 'high',
@@ -772,7 +780,7 @@ Stream<StreamChunk> sendGoogleStream(
           if (u != null) {
             final prompt = (u['promptTokenCount'] ?? 0) as int? ?? 0;
             final completion = (u['candidatesTokenCount'] ?? 0) as int? ?? 0;
-            totalUsage = (totalUsage ?? const TokenUsage()).accumulate(
+            totalUsage = (totalUsage ?? const TokenUsage()).merge(
               TokenUsage(
                 promptTokens: prompt,
                 completionTokens: completion,

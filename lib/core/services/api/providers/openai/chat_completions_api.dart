@@ -825,6 +825,12 @@ Stream<StreamChunk> runOpenAIChatCompletionsToolFollowUps({
       if (extraBodyCfg.isNotEmpty) {
         body2.addAll(extraBodyCfg);
       }
+      applyPoolsideThinkingIfNeeded(
+        body2,
+        info: info,
+        isReasoning: isReasoning,
+        thinkingBudget: thinkingBudget,
+      );
       // Built-in tools run after the custom body and merge by type.
       applyChatCompletionsBuiltInTools(
         body2,
@@ -1002,7 +1008,7 @@ Stream<StreamChunk> runOpenAIChatCompletionsNonStreamToolFollowUps({
               as Map<String, dynamic>;
       final roundUsage = openaiUsageFromObj(lastObj);
       if (roundUsage != null) {
-        usage = (usage ?? const TokenUsage()).accumulate(roundUsage);
+        usage = (usage ?? const TokenUsage()).merge(roundUsage);
       }
     },
     takeCallsAfterRound: () =>

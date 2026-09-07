@@ -2535,6 +2535,21 @@ class AppLocalizationsEn extends AppLocalizations {
   String get reasoningBudgetSheetCustomHint => 'e.g. 2048 (-1 auto, 0 off)';
 
   @override
+  String get reasoningBudgetSliderLow => 'Low';
+
+  @override
+  String get reasoningBudgetSliderMedium => 'Medium';
+
+  @override
+  String get reasoningBudgetSliderHigh => 'High';
+
+  @override
+  String get reasoningBudgetSliderXhigh => 'XHigh';
+
+  @override
+  String get reasoningBudgetSliderMax => 'Max';
+
+  @override
   String chatMessageWidgetFileNotFound(String fileName) {
     return 'File not found: $fileName';
   }
@@ -3588,13 +3603,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get modelDetailSheetReasoningAbility => 'Reasoning';
-
-  @override
-  String get modelDetailSheetProviderOverrideDescription =>
-      'Provider overrides: customize provider for a specific model.';
-
-  @override
-  String get modelDetailSheetAddProviderOverride => 'Add Provider Override';
 
   @override
   String get modelDetailSheetCustomHeadersTitle => 'Custom Headers';
