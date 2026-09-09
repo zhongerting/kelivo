@@ -234,13 +234,18 @@ class ChatMessage extends HiveObject {
   ///
   /// Writes [newContent] into the first [TextPart] (or prepends one). Image,
   /// file, and unknown parts stay in place so generated media is not lost.
+  /// Reply options belong to the original generated revision and are not
+  /// copied into a manually edited revision.
   static List<MessagePart> partsWithoutThinkingAndToolCards(
     List<MessagePart> original,
     String newContent,
   ) {
     return partsWithReplacedText([
       for (final part in original)
-        if (part is! ReasoningPart && part is! ToolCallPart) part,
+        if (part is! ReasoningPart &&
+            part is! ToolCallPart &&
+            part is! ReplyOptionsPart)
+          part,
     ], newContent);
   }
 

@@ -7,6 +7,7 @@ import 'dart:convert';
 /// - `tool_call`: JSON string preserved as-is
 /// - `image`: `{"uri","mime"?,"assetId"?,"unavailable"?}`
 /// - `file`: `{"uri","name","mime"?,"assetId"?,"unavailable"?}`
+/// - `reply_options`: `{"version":1,"assistantId":"...","options":[...]}`
 /// - unknown kinds: stored in [UnknownPart] and written back unchanged
 /// - malformed known kinds: created only while hydrating database rows and
 ///   stored in [MalformedPart] for lossless write-back
@@ -25,6 +26,8 @@ sealed class MessagePart {
         return ImagePart.fromPayload(payload);
       case 'file':
         return FilePart.fromPayload(payload);
+      case 'reply_options':
+        return ReplyOptionsPart.fromPayload(payload);
       default:
         return UnknownPart(rawKind: kind, payload: payload);
     }
@@ -207,6 +210,106 @@ final class FilePart extends MessagePart {
 
   @override
   int get hashCode => Object.hash(uri, name, mime, assetId, unavailable);
+}
+
+final class ReplyOptionsPart extends MessagePart {
+  ReplyOptionsPart({
+    required this.assistantId,
+    required List<String> options,
+    this.version = 1,
+  }) : options = List<String>.unmodifiable(options) {
+    _validate(
+      version: version,
+      assistantId: assistantId,
+      options: this.options,
+    );
+  }
+
+  factory ReplyOptionsPart.fromPayload(String payload) {
+    final map = _decodeObjectPayload(payload);
+    final version = map['version'];
+    final assistantId = map['assistantId'];
+    final rawOptions = map['options'];
+    if (version is! int) {
+      throw const _MessagePartFormatException('invalid_reply_options_version');
+    }
+    if (assistantId is! String) {
+      throw const _MessagePartFormatException(
+        'invalid_reply_options_assistant',
+      );
+    }
+    if (rawOptions is! List) {
+      throw const _MessagePartFormatException('invalid_reply_options_list');
+    }
+    final options = <String>[];
+    for (final option in rawOptions) {
+      if (option is! String) {
+        throw const _MessagePartFormatException('invalid_reply_options_item');
+      }
+      options.add(option);
+    }
+    return ReplyOptionsPart(
+      version: version,
+      assistantId: assistantId,
+      options: options,
+    );
+  }
+
+  final int version;
+  final String assistantId;
+  final List<String> options;
+
+  @override
+  String get kind => 'reply_options';
+
+  @override
+  String encodePayload() => jsonEncode({
+    'version': version,
+    'assistantId': assistantId,
+    'options': options,
+  });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ReplyOptionsPart &&
+          version == other.version &&
+          assistantId == other.assistantId &&
+          _listEquals(options, other.options);
+
+  @override
+  int get hashCode =>
+      Object.hash(version, assistantId, Object.hashAll(options));
+
+  static void _validate({
+    required int version,
+    required String assistantId,
+    required List<String> options,
+  }) {
+    if (version != 1) {
+      throw const FormatException('invalid_reply_options_version');
+    }
+    if (assistantId.isEmpty || assistantId.trim() != assistantId) {
+      throw const FormatException('invalid_reply_options_assistant');
+    }
+    if (options.isEmpty || options.length > 6) {
+      throw const FormatException('invalid_reply_options_list');
+    }
+    final seen = <String>{};
+    for (final option in options) {
+      if (option.isEmpty || option.trim() != option || !seen.add(option)) {
+        throw const FormatException('invalid_reply_options_item');
+      }
+    }
+  }
+}
+
+bool _listEquals(List<String> left, List<String> right) {
+  if (left.length != right.length) return false;
+  for (var i = 0; i < left.length; i++) {
+    if (left[i] != right[i]) return false;
+  }
+  return true;
 }
 
 /// Forward-compatible carrier for kinds this build does not understand.

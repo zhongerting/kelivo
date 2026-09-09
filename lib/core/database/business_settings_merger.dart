@@ -63,6 +63,7 @@ final class BusinessSettingsMerger {
       for (final kind in BusinessEntityKind.values)
         kind: existing.entities[kind]!,
     };
+    var extensionEntities = existing.extensionEntities;
     for (final kind in BusinessEntityKind.values) {
       if (!effectiveIncomingKeys.contains(kind.sourceKey)) continue;
       final localRows = existing.entities[kind]!;
@@ -110,6 +111,14 @@ final class BusinessSettingsMerger {
         preferIncomingOrder: true,
       );
     }
+    if (effectiveIncomingKeys.contains(
+      BusinessKeyRegistry.extensionEntitiesKey,
+    )) {
+      extensionEntities = _mergeExtensionEntities(
+        existing.extensionEntities,
+        incoming.extensionEntities,
+      );
+    }
 
     final preferences = Map<String, Object>.from(existing.preferences);
     for (final key in effectiveIncomingKeys) {
@@ -155,7 +164,29 @@ final class BusinessSettingsMerger {
       }
     }
 
-    return BusinessSnapshot(entities: entities, preferences: preferences);
+    return BusinessSnapshot(
+      entities: entities,
+      preferences: preferences,
+      extensionEntities: extensionEntities,
+    );
+  }
+
+  static List<BusinessExtensionEntityValue> _mergeExtensionEntities(
+    List<BusinessExtensionEntityValue> existing,
+    List<BusinessExtensionEntityValue> incoming,
+  ) {
+    final selected = <String, BusinessExtensionEntityValue>{};
+    final order = <String>[];
+    for (final row in <BusinessExtensionEntityValue>[
+      ...existing,
+      ...incoming,
+    ]) {
+      final key = '${row.kind}\u0000${row.id}';
+      if (selected.containsKey(key)) continue;
+      selected[key] = row;
+      order.add(key);
+    }
+    return [for (final key in order) selected[key]!];
   }
 
   static List<BusinessEntityValue> _mergeAssistants(

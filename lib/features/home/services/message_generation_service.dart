@@ -12,6 +12,8 @@ import '../../../core/services/api/builtin_tools.dart';
 import '../../../core/services/api/chat_api_service.dart';
 import '../../../core/services/chat/chat_service.dart';
 import '../../../core/services/logging/context_logger.dart';
+import '../../../core/services/story_memory/story_memory_context.dart';
+import '../../../core/services/story_memory/story_memory_repository.dart';
 import '../../../core/utils/multimodal_input_utils.dart';
 import '../../../utils/sandbox_path_resolver.dart';
 import '../../../utils/assistant_regex.dart';
@@ -85,6 +87,7 @@ class MessageGenerationService {
     required this.generationController,
     required this.streamController,
     required this.contextProvider,
+    this.storyMemoryRepository,
   });
 
   final ChatService chatService;
@@ -92,6 +95,7 @@ class MessageGenerationService {
   final GenerationController generationController;
   final stream_ctrl.StreamController streamController;
   final BuildContext contextProvider;
+  final StoryMemoryRepository? storyMemoryRepository;
 
   // Callbacks for UI updates (set by home_page)
   OnMessagesChanged? onMessagesChanged;
@@ -139,9 +143,30 @@ class MessageGenerationService {
       ProviderKind.openai || ProviderKind.claude || ProviderKind.google => true,
     };
 
-    // Build API messages
+    var requestMessages = messages;
+    StoryMemoryContextResult? storyMemoryContext;
+    if (storyMemoryRepository != null && currentConversation != null) {
+      try {
+        storyMemoryContext =
+            await StoryMemoryContextBuilder(
+              repository: storyMemoryRepository!,
+              chatService: chatService,
+            ).prepare(
+              messages: messages,
+              conversation: currentConversation,
+              assistant: assistant,
+            );
+        requestMessages = storyMemoryContext.messages;
+      } catch (error, stackTrace) {
+        // Story memory is an optimization. Any read, digest, or stale-state
+        // failure leaves the complete request history intact.
+        debugPrint('StoryMemory context skipped: $error\n$stackTrace');
+      }
+    }
+
+    // Build API messages from the request-only story-memory projection.
     final apiMessages = messageBuilderService.buildApiMessages(
-      messages: messages,
+      messages: requestMessages,
       versionSelections: versionSelections,
       currentConversation: currentConversation,
       includeToolMessages: includeToolMessages,
@@ -186,6 +211,13 @@ class MessageGenerationService {
       assistant,
       userName: userName,
     );
+    if (storyMemoryContext?.injection case final injection?) {
+      messageBuilderService.injectStoryMemorySnapshot(
+        apiMessages,
+        content: injection,
+        meta: storyMemoryContext?.injectionMeta,
+      );
+    }
     await messageBuilderService.injectMemoryAndRecentChats(
       apiMessages,
       assistant,

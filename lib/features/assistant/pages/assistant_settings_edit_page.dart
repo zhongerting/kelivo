@@ -39,6 +39,7 @@ import '../../../core/services/chat/chat_service.dart';
 import '../../../core/services/memory/memory_gatekeeper.dart';
 import '../../../core/services/memory/memory_pipeline.dart';
 import '../../settings/pages/memory_settings_page.dart';
+import '../../story_memory/pages/story_memory_page.dart';
 import '../../settings/widgets/memory_ui.dart';
 import '../../prompt_preset/widgets/prompt_preset_selector.dart';
 import '../../../core/services/haptics.dart';

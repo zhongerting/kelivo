@@ -24,6 +24,207 @@ class _MemorySettingsNavCard extends StatelessWidget {
   }
 }
 
+class _StoryMemorySettingsCard extends StatelessWidget {
+  const _StoryMemorySettingsCard({required this.assistant});
+
+  final Assistant assistant;
+
+  bool _isZh(BuildContext context) =>
+      Localizations.localeOf(context).languageCode == 'zh';
+
+  String _t(BuildContext context, String en, String zh) =>
+      _isZh(context) ? zh : en;
+
+  Future<void> _open(BuildContext context) async {
+    final chat = context.read<ChatService>();
+    final conversationId = chat.currentConversationId;
+    final conversation = conversationId == null
+        ? null
+        : chat.getConversation(conversationId);
+    if (conversation == null || conversation.assistantId != assistant.id) {
+      showAppSnackBar(
+        context,
+        message: AppLocalizations.of(context)!.memoryOrganizeNeedsConversation,
+        type: NotificationType.warning,
+      );
+      return;
+    }
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => StoryMemoryPage(
+          conversationId: conversation.id,
+          assistantId: assistant.id,
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickInt(
+    BuildContext context, {
+    required String titleEn,
+    required String titleZh,
+    required int selected,
+    required List<int> options,
+    required void Function(int value) onSelected,
+    String Function(int value)? optionLabelEn,
+    String Function(int value)? optionLabelZh,
+  }) async {
+    final choice = await _showMemoryChoiceSheet<int>(
+      context,
+      title: _t(context, titleEn, titleZh),
+      selected: selected,
+      options: [
+        for (final option in options)
+          (
+            option,
+            _t(
+              context,
+              optionLabelEn?.call(option) ??
+                  (option == 1 ? '1 turn' : '$option turns'),
+              optionLabelZh?.call(option) ?? '$option 个回合',
+            ),
+          ),
+      ],
+    );
+    if (choice == null || !context.mounted) return;
+    onSelected(choice);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ap = context.read<AssistantProvider>();
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 8, 16, 8),
+      child: SectionCard(
+        padding: EdgeInsets.zero,
+        child: Column(
+          children: [
+            _iosSwitchRow(
+              context,
+              icon: Lucide.BookOpenText,
+              label: _t(context, 'Use story / RP memory', '使用小说 / RP 故事记忆'),
+              tip: _t(
+                context,
+                'Keep characters, state, relations, events, and plot summaries for this conversation.',
+                '为本对话保存角色、状态、关系、事件和情节摘要。',
+              ),
+              value: assistant.enableStoryMemory,
+              onChanged: (value) => ap.updateAssistant(
+                assistant.copyWith(enableStoryMemory: value),
+              ),
+            ),
+            if (assistant.enableStoryMemory) ...[
+              _iosDivider(context),
+              _iosNavRow(
+                context,
+                icon: Lucide.ChartColumnBig,
+                label: _t(context, 'Memory input budget', '记忆输入预算'),
+                detailText: _t(
+                  context,
+                  '${assistant.storyMemoryBudgetPercent}%',
+                  '${assistant.storyMemoryBudgetPercent}%',
+                ),
+                onTap: () => _pickInt(
+                  context,
+                  titleEn: 'Memory input budget',
+                  titleZh: '记忆输入预算',
+                  selected: assistant.storyMemoryBudgetPercent,
+                  options: const [5, 10, 20, 30, 40, 50],
+                  optionLabelEn: (value) => '$value%',
+                  optionLabelZh: (value) => '$value%',
+                  onSelected: (value) => ap.updateAssistant(
+                    assistant.copyWith(storyMemoryBudgetPercent: value),
+                  ),
+                ),
+              ),
+              _iosDivider(context),
+              _iosSwitchRow(
+                context,
+                icon: Lucide.Sparkles,
+                label: _t(context, 'Organize automatically', '自动整理'),
+                tip: _t(
+                  context,
+                  'Run the independent memory model after the selected number of turns.',
+                  '按设定回合数调用独立记忆模型整理。',
+                ),
+                value: assistant.autoOrganizeStoryMemory,
+                onChanged: (value) => ap.updateAssistant(
+                  assistant.copyWith(autoOrganizeStoryMemory: value),
+                ),
+              ),
+              _iosDivider(context),
+              _iosNavRow(
+                context,
+                icon: Lucide.FileClock,
+                label: _t(context, 'Organize frequency', '整理频率'),
+                detailText: _t(
+                  context,
+                  '${assistant.storyMemoryOrganizeEveryNTurns} turns',
+                  '${assistant.storyMemoryOrganizeEveryNTurns} 个回合',
+                ),
+                onTap: () => _pickInt(
+                  context,
+                  titleEn: 'Organize frequency',
+                  titleZh: '整理频率',
+                  selected: assistant.storyMemoryOrganizeEveryNTurns,
+                  options: const [1, 2, 4, 8],
+                  onSelected: (value) => ap.updateAssistant(
+                    assistant.copyWith(storyMemoryOrganizeEveryNTurns: value),
+                  ),
+                ),
+              ),
+              _iosDivider(context),
+              _iosNavRow(
+                context,
+                icon: Lucide.History,
+                label: _t(context, 'Recent turns kept', '保留最近回合'),
+                detailText: _t(
+                  context,
+                  '${assistant.storyMemoryRecentTurnRetention} turns',
+                  '${assistant.storyMemoryRecentTurnRetention} 个回合',
+                ),
+                onTap: () => _pickInt(
+                  context,
+                  titleEn: 'Recent turns kept',
+                  titleZh: '保留最近回合',
+                  selected: assistant.storyMemoryRecentTurnRetention,
+                  options: const [4, 8, 16, 32],
+                  onSelected: (value) => ap.updateAssistant(
+                    assistant.copyWith(storyMemoryRecentTurnRetention: value),
+                  ),
+                ),
+              ),
+              _iosDivider(context),
+              _iosSwitchRow(
+                context,
+                icon: Lucide.ClipboardCheck,
+                label: _t(context, 'Confirm before writing', '写入前确认'),
+                tip: _t(
+                  context,
+                  'Keep generated patches pending until you review them.',
+                  '生成 patch 后先等待你审核。',
+                ),
+                value: assistant.storyMemoryRequireConfirmation,
+                onChanged: (value) => ap.updateAssistant(
+                  assistant.copyWith(storyMemoryRequireConfirmation: value),
+                ),
+              ),
+              _iosDivider(context),
+              _iosNavRow(
+                context,
+                icon: Lucide.Table2,
+                label: _t(context, 'Open story memory', '打开故事记忆'),
+                detailText: _t(context, 'Current chat', '当前对话'),
+                onTap: () => _open(context),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
 class _MemoryTab extends StatefulWidget {
   const _MemoryTab({required this.assistantId});
   final String assistantId;
@@ -162,9 +363,19 @@ class _MemoryTabState extends State<_MemoryTab> {
   Widget build(BuildContext context) {
     final settings = context.watch<SettingsProvider>();
     if (settings.legacyMemoryMode) {
+      final assistant = context.read<AssistantProvider>().getById(
+        widget.assistantId,
+      );
       return _LegacyMemoryTabBody(
         assistantId: widget.assistantId,
-        footer: _MemorySettingsNavCard(onTap: _goMemorySettings),
+        footer: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _MemorySettingsNavCard(onTap: _goMemorySettings),
+            if (assistant != null)
+              _StoryMemorySettingsCard(assistant: assistant),
+          ],
+        ),
       );
     }
 
@@ -331,6 +542,8 @@ class _MemoryTabState extends State<_MemoryTab> {
         ),
 
         _MemorySettingsNavCard(onTap: _goMemorySettings),
+
+        _StoryMemorySettingsCard(assistant: a),
 
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),

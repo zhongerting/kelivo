@@ -1890,6 +1890,31 @@ class MessageBuilderService {
     apiMessages.insert(insertAt, message);
   }
 
+  /// Inject the request-only conversation story state after the system and
+  /// character prompts. The stored chat never receives this synthetic row.
+  void injectStoryMemorySnapshot(
+    List<Map<String, dynamic>> apiMessages, {
+    required String content,
+    Map<String, dynamic>? meta,
+  }) {
+    if (content.trim().isEmpty) return;
+    final message = <String, dynamic>{'role': 'system', 'content': content};
+    if (ContextLogger.enabled) {
+      ContextSegmentTags.replaceWithSingle(
+        message,
+        source: ContextSource.storyMemory,
+        length: content.length,
+        meta: meta,
+      );
+    }
+    var insertAt = 0;
+    while (insertAt < apiMessages.length &&
+        (apiMessages[insertAt]['role'] ?? '').toString() == 'system') {
+      insertAt++;
+    }
+    apiMessages.insert(insertAt, message);
+  }
+
   /// Inject §11 memory rules into the system message.
   ///
   /// Pure function of `(enableMemory, allowPastConversationRecall, lang,

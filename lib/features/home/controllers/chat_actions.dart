@@ -20,6 +20,7 @@ import '../../../core/services/chat/chat_service.dart';
 import '../../../core/services/ios_background_generation.dart';
 import '../../../core/services/logging/flutter_logger.dart';
 import '../../../l10n/app_localizations.dart';
+import '../../../core/utils/reply_options_parser.dart';
 import '../../../utils/assistant_regex.dart';
 import '../../../core/models/assistant_regex.dart';
 import '../services/ask_user_interaction_service.dart';
@@ -817,6 +818,34 @@ class ChatActions {
     return out;
   }
 
+  /// Removes the protocol tail from the accumulated text while preserving
+  /// every non-text part at its original ordinal.
+  @visibleForTesting
+  static List<MessagePart> assistantPartsForFinalText({
+    required List<MessagePart> parts,
+    required String? assistantId,
+  }) {
+    final source = [
+      for (final part in parts)
+        if (part is! ReplyOptionsPart) part,
+    ];
+    final text = [
+      for (final part in source)
+        if (part case TextPart(:final text)) text,
+    ].join();
+    final parsed = parseReplyOptionsFinal(text);
+    final result = assistantPartsForVisibleText(
+      parts: source,
+      visibleText: parsed.body,
+    );
+    if (parsed.valid && assistantId != null && assistantId.isNotEmpty) {
+      result.add(
+        ReplyOptionsPart(assistantId: assistantId, options: parsed.options),
+      );
+    }
+    return result;
+  }
+
   @visibleForTesting
   static List<MessagePart> assistantPartsForStreamError({
     required List<MessagePart> parts,
@@ -1052,35 +1081,68 @@ class ChatActions {
     stream_ctrl.StreamingState state, [
     String? raw,
   ]) {
-    return applyAssistantRegexes(
+    final transformed = applyAssistantRegexes(
       raw ?? state.fullContentRaw,
       assistant: state.ctx.assistant,
       scope: AssistantRegexScope.assistant,
       target: AssistantRegexTransformTarget.persist,
     );
+    return parseReplyOptionsStreaming(transformed).body;
   }
 
   List<MessagePart> _assistantPartsForState(
     stream_ctrl.StreamingState state, {
     String? visibleText,
   }) {
-    final parts = state.partsHandler.parts;
-    if (parts.isEmpty) {
-      return <MessagePart>[
-        TextPart(visibleText ?? _transformAssistantContent(state)),
-      ];
+    final transformed = _transformedAssistantParts(state);
+    final text = [
+      for (final part in transformed)
+        if (part case TextPart(:final text)) text,
+    ].join();
+    final parsed = parseReplyOptionsStreaming(text);
+    if (transformed.isEmpty) {
+      return <MessagePart>[TextPart(visibleText ?? parsed.body)];
     }
-    final transformed = [
-      for (final part in parts)
-        if (part is TextPart)
-          TextPart(_transformAssistantContent(state, part.text))
-        else if (part is! ImagePart || !isBlankImageUri(part.uri))
-          part,
-    ];
-    if (visibleText == null) return transformed;
     return assistantPartsForVisibleText(
       parts: transformed,
-      visibleText: visibleText,
+      visibleText: visibleText ?? parsed.body,
+    );
+  }
+
+  List<MessagePart> _transformedAssistantParts(
+    stream_ctrl.StreamingState state,
+  ) {
+    return [
+      for (final part in state.partsHandler.parts)
+        if (part is TextPart)
+          TextPart(
+            applyAssistantRegexes(
+              part.text,
+              assistant: state.ctx.assistant,
+              scope: AssistantRegexScope.assistant,
+              target: AssistantRegexTransformTarget.persist,
+            ),
+          )
+        else if (part is! ReplyOptionsPart &&
+            (part is! ImagePart || !isBlankImageUri(part.uri)))
+          part,
+    ];
+  }
+
+  String? _assistantIdForState(stream_ctrl.StreamingState state) {
+    final assistant = state.ctx.assistant;
+    return assistant is Assistant && assistant.id.isNotEmpty
+        ? assistant.id
+        : null;
+  }
+
+  List<MessagePart> _finalAssistantPartsForState(
+    stream_ctrl.StreamingState state,
+  ) {
+    final transformed = _transformedAssistantParts(state);
+    return assistantPartsForFinalText(
+      parts: transformed,
+      assistantId: _assistantIdForState(state),
     );
   }
 
@@ -1429,6 +1491,13 @@ class ChatActions {
     Assistant? assistant,
     Conversation conversation,
   ) {
+    // Story-memory coverage needs the selected prefix available before the
+    // request-only replacement pass. The normal assistant context limit is
+    // still applied later, after the replacement and memory injections.
+    if (assistant?.enableStoryMemory == true &&
+        !chatService.isTemporaryConversation(conversation.id)) {
+      return chatService.resolveMessageCount(conversation.id);
+    }
     return resolveContextReadLimit(
       assistant: assistant,
       resolvePersistedCount: () =>
@@ -2518,7 +2587,12 @@ class ChatActions {
     streamController.finishReasoningIfNeeded(messageId);
 
     // Replace extremely long inline base64 images with local files to avoid jank
-    final processedContent = _transformAssistantContent(state);
+    final transformedText = [
+      for (final part in _transformedAssistantParts(state))
+        if (part case TextPart(:final text)) text,
+    ].join();
+    final finalParse = parseReplyOptionsFinal(transformedText);
+    final processedContent = finalParse.body;
 
     // Compute final duration
     final finalDurationMs = _elapsedMsFrom(state.streamStartedAt);
@@ -2531,7 +2605,7 @@ class ChatActions {
     // or onDone firing concurrently) still shows the correct content via the
     // notifier-based streaming path.
     final assistantParts = await _sanitizeAssistantImageParts(
-      _assistantPartsForState(state),
+      _finalAssistantPartsForState(state),
     );
     streamController.streamingContentNotifier.updateContent(
       messageId,
@@ -2728,8 +2802,15 @@ class ChatActions {
             reasoningDetails: details,
           )
         : streaming.reasoningSegmentsJson;
+    final state = _streamingStates[streaming.id];
+    final progressParts = state == null
+        ? ChatMessage.partsWithRedistributedText([
+            for (final part in streaming.parts)
+              if (part is! ReplyOptionsPart) part,
+          ], latestContent)
+        : _assistantPartsForState(state, visibleText: latestContent);
     final snapshot = streaming.copyWith(
-      content: latestContent,
+      parts: progressParts,
       reasoningText: r?.text,
       reasoningStartAt: r?.startAt,
       reasoningFinishedAt: r?.finishedAt,

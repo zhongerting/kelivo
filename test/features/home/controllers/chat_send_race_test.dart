@@ -13,12 +13,17 @@ import '../../../support/business_test_harness.dart';
 import 'package:Kelivo/core/database/chat_database_repository.dart';
 import 'package:Kelivo/core/models/chat_input_data.dart';
 import 'package:Kelivo/core/models/chat_message.dart';
+import 'package:Kelivo/core/models/message_part.dart';
 import 'package:Kelivo/core/models/conversation.dart';
 import 'package:Kelivo/core/providers/assistant_provider.dart';
 import 'package:Kelivo/core/providers/mcp_provider.dart';
 import 'package:Kelivo/core/providers/settings_provider.dart';
 import 'package:Kelivo/core/services/chat/chat_service.dart';
+import 'package:Kelivo/core/services/logging/context_logger.dart';
+import 'package:Kelivo/core/services/logging/flutter_logger.dart';
 import 'package:Kelivo/core/services/mcp/mcp_tool_service.dart';
+import 'package:Kelivo/core/services/network/request_logger.dart';
+import 'package:Kelivo/core/utils/reply_options_selector.dart';
 import 'package:Kelivo/features/chat/widgets/chat_message_widget.dart'
     show ToolUIPart;
 import 'package:Kelivo/features/home/controllers/home_page_controller.dart';
@@ -136,7 +141,10 @@ void main() {
     try {
       await repository.close().timeout(const Duration(seconds: 10));
     } catch (_) {}
-    if (await directory.exists()) await directory.delete(recursive: true);
+    await RequestLogger.setEnabled(false);
+    await ContextLogger.setEnabled(false);
+    await FlutterLogger.setEnabled(false);
+    await directory.delete(recursive: true);
   });
 
   Future<HomePageController> pumpHarness(
@@ -259,6 +267,180 @@ void main() {
     });
     expect(tester.takeException(), isNull);
   });
+
+  testWidgets('reply option send preserves the current draft and attachments', (
+    tester,
+  ) async {
+    final controller = await pumpHarness(tester);
+    await tester.runAsync(() async {
+      final convo = await openConversation(controller);
+      const draftDocument = DocumentAttachment(
+        path: '/tmp/draft.pdf',
+        fileName: 'draft.pdf',
+        mime: 'application/pdf',
+      );
+      controller.inputController.value = const TextEditingValue(
+        text: 'keep this draft',
+        selection: TextSelection.collapsed(offset: 15),
+      );
+      controller.mediaController.addImages(const ['/tmp/draft.png']);
+      controller.mediaController.addFiles(const [draftDocument]);
+      final before = controller.mediaController.snapshotInput(
+        controller.inputController.text,
+      );
+
+      final result = await controller.sendReplyOption('take the left door');
+
+      expect(result, ChatInputSubmissionResult.sent);
+      expect(
+        controller.inputController.text,
+        before.text,
+        reason: 'an option uses an independent ChatInputData',
+      );
+      final afterSend = controller.mediaController.snapshotInput(
+        controller.inputController.text,
+      );
+      expect(afterSend.imagePaths, before.imagePaths);
+      expect(afterSend.documents, before.documents);
+
+      await waitFor(() => streamRequestCount == 1, 'option stream to fire');
+      await waitFor(
+        () => !controller.chatController.isConversationLoading(convo.id),
+        'option streaming to finish',
+      );
+      final afterFinish = controller.mediaController.snapshotInput(
+        controller.inputController.text,
+      );
+      expect(afterFinish.text, before.text);
+      expect(afterFinish.imagePaths, before.imagePaths);
+      expect(afterFinish.documents, before.documents);
+    });
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('rejected reply option leaves the existing options available', (
+    tester,
+  ) async {
+    final controller = await pumpHarness(tester);
+    await tester.runAsync(() async {
+      final assistantId = assistantProvider.currentAssistant!.id;
+      final convo = await service.createConversation(
+        title: 'Options remain on rejection',
+        assistantId: assistantId,
+      );
+      await service.addMessageDirectly(
+        convo.id,
+        ChatMessage(
+          id: 'assistant-with-options',
+          role: 'assistant',
+          conversationId: convo.id,
+          parts: [
+            const TextPart('The scene is quiet.'),
+            ReplyOptionsPart(
+              assistantId: assistantId,
+              options: ['look around', 'wait'],
+            ),
+          ],
+        ),
+      );
+      await controller.chatController.setCurrentConversationAndLoad(
+        service.getConversation(convo.id)!,
+      );
+      controller.debugViewModel.onWarning = null;
+      await settings.resetCurrentModel();
+
+      final result = await controller.sendReplyOption('look around');
+
+      expect(result, ChatInputSubmissionResult.rejected);
+      expect(
+        selectReplyOptions(
+          messages: controller.chatController.collapsedMessages,
+          versionSelections: controller.versionSelections,
+          assistantId: assistantId,
+          conversationId: convo.id,
+        ),
+        ['look around', 'wait'],
+      );
+      expect(await service.loadMessages(convo.id), hasLength(1));
+    });
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'queued reply option is independent and double taps are rejected',
+    (tester) async {
+      final controller = await pumpHarness(tester);
+      await tester.runAsync(() async {
+        final convo = await openConversation(controller);
+        const draftDocument = DocumentAttachment(
+          path: '/tmp/queued-draft.txt',
+          fileName: 'queued-draft.txt',
+          mime: 'text/plain',
+        );
+        controller.inputController.text = 'draft stays here';
+        controller.mediaController.addImages(const ['/tmp/queued-draft.png']);
+        controller.mediaController.addFiles(const [draftDocument]);
+        final before = controller.mediaController.snapshotInput(
+          controller.inputController.text,
+        );
+        controller.chatController.setConversationLoading(convo.id, true);
+
+        final first = controller.sendReplyOption('queue this choice');
+        final second = controller.sendReplyOption('queue this choice');
+        final results = await Future.wait([first, second]);
+
+        expect(results, [
+          ChatInputSubmissionResult.queued,
+          ChatInputSubmissionResult.rejected,
+        ]);
+        expect(controller.currentQueuedInput?.input.text, 'queue this choice');
+        final after = controller.mediaController.snapshotInput(
+          controller.inputController.text,
+        );
+        expect(after.text, before.text);
+        expect(after.imagePaths, before.imagePaths);
+        expect(after.documents, before.documents);
+      });
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets(
+    'append inserts at selection, clears composing, and restores focus',
+    (tester) async {
+      final controller = await pumpHarness(tester);
+
+      controller.inputController.value = const TextEditingValue(
+        text: 'abcdef',
+        selection: TextSelection(baseOffset: 1, extentOffset: 4),
+        composing: TextRange(start: 0, end: 2),
+      );
+      controller.insertTextAtSelection('X');
+
+      expect(controller.inputController.text, 'aXef');
+      expect(
+        controller.inputController.selection,
+        const TextSelection.collapsed(offset: 2),
+      );
+      expect(controller.inputController.value.composing, TextRange.empty);
+      await tester.pump();
+      expect(controller.inputFocus.hasFocus, isTrue);
+
+      controller.inputController.value = const TextEditingValue(
+        text: 'tail',
+        selection: TextSelection.collapsed(offset: -1),
+      );
+      controller.insertTextAtSelection('!');
+      expect(controller.inputController.text, 'tail!');
+      expect(
+        controller.inputController.selection,
+        const TextSelection.collapsed(offset: 5),
+      );
+      await tester.pump();
+      expect(controller.inputFocus.hasFocus, isTrue);
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('single-flight cancel hides loading before slow teardown', (
     tester,
@@ -625,5 +807,12 @@ class _ControllerHarnessState extends State<_ControllerHarness>
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(key: _scaffoldKey);
+  Widget build(BuildContext context) => Scaffold(
+    key: _scaffoldKey,
+    body: ChatInputBar(
+      controller: _inputController,
+      focusNode: _inputFocus,
+      mediaController: _mediaController,
+    ),
+  );
 }

@@ -29,6 +29,15 @@ class Assistant {
   static const int defaultMemoryOrganizeEveryNTurns = 1;
   static const int minMemoryOrganizeEveryNTurns = 1;
   static const int maxMemoryOrganizeEveryNTurns = 20;
+  static const int defaultStoryMemoryOrganizeEveryNTurns = 4;
+  static const int minStoryMemoryOrganizeEveryNTurns = 1;
+  static const int maxStoryMemoryOrganizeEveryNTurns = 8;
+  static const int defaultStoryMemoryRecentTurnRetention = 8;
+  static const int minStoryMemoryRecentTurnRetention = 1;
+  static const int maxStoryMemoryRecentTurnRetention = 32;
+  static const int defaultStoryMemoryBudgetPercent = 20;
+  static const int minStoryMemoryBudgetPercent = 5;
+  static const int maxStoryMemoryBudgetPercent = 50;
   static const double defaultTemperature = 1.0;
   static const int minContextMessageSize = 1;
   static const int maxContextMessageSize = 4096;
@@ -74,6 +83,14 @@ class Assistant {
   final bool enableMemory;
   final bool autoOrganizeMemory;
   final int memoryOrganizeEveryNTurns;
+  // Story/RP memory is conversation-scoped and intentionally separate from
+  // the cross-conversation user memory above.
+  final bool enableStoryMemory;
+  final bool autoOrganizeStoryMemory;
+  final int storyMemoryOrganizeEveryNTurns;
+  final int storyMemoryRecentTurnRetention;
+  final int storyMemoryBudgetPercent;
+  final bool storyMemoryRequireConfirmation;
   final MemorySmartAddMode memorySmartAddMode;
   final MemoryWriteScope memoryWriteScope;
   final bool allowPastConversationRecall;
@@ -117,6 +134,12 @@ class Assistant {
     this.enableMemory = false,
     this.autoOrganizeMemory = false,
     this.memoryOrganizeEveryNTurns = defaultMemoryOrganizeEveryNTurns,
+    this.enableStoryMemory = false,
+    this.autoOrganizeStoryMemory = false,
+    this.storyMemoryOrganizeEveryNTurns = defaultStoryMemoryOrganizeEveryNTurns,
+    this.storyMemoryRecentTurnRetention = defaultStoryMemoryRecentTurnRetention,
+    this.storyMemoryBudgetPercent = defaultStoryMemoryBudgetPercent,
+    this.storyMemoryRequireConfirmation = false,
     this.memorySmartAddMode = MemorySmartAddMode.batched,
     this.memoryWriteScope = MemoryWriteScope.alwaysGlobal,
     this.allowPastConversationRecall = false,
@@ -158,6 +181,12 @@ class Assistant {
     bool? enableMemory,
     bool? autoOrganizeMemory,
     int? memoryOrganizeEveryNTurns,
+    bool? enableStoryMemory,
+    bool? autoOrganizeStoryMemory,
+    int? storyMemoryOrganizeEveryNTurns,
+    int? storyMemoryRecentTurnRetention,
+    int? storyMemoryBudgetPercent,
+    bool? storyMemoryRequireConfirmation,
     MemorySmartAddMode? memorySmartAddMode,
     MemoryWriteScope? memoryWriteScope,
     bool? allowPastConversationRecall,
@@ -210,6 +239,17 @@ class Assistant {
       autoOrganizeMemory: autoOrganizeMemory ?? this.autoOrganizeMemory,
       memoryOrganizeEveryNTurns:
           memoryOrganizeEveryNTurns ?? this.memoryOrganizeEveryNTurns,
+      enableStoryMemory: enableStoryMemory ?? this.enableStoryMemory,
+      autoOrganizeStoryMemory:
+          autoOrganizeStoryMemory ?? this.autoOrganizeStoryMemory,
+      storyMemoryOrganizeEveryNTurns:
+          storyMemoryOrganizeEveryNTurns ?? this.storyMemoryOrganizeEveryNTurns,
+      storyMemoryRecentTurnRetention:
+          storyMemoryRecentTurnRetention ?? this.storyMemoryRecentTurnRetention,
+      storyMemoryBudgetPercent:
+          storyMemoryBudgetPercent ?? this.storyMemoryBudgetPercent,
+      storyMemoryRequireConfirmation:
+          storyMemoryRequireConfirmation ?? this.storyMemoryRequireConfirmation,
       memorySmartAddMode: memorySmartAddMode ?? this.memorySmartAddMode,
       memoryWriteScope: memoryWriteScope ?? this.memoryWriteScope,
       allowPastConversationRecall:
@@ -257,6 +297,12 @@ class Assistant {
     'enableMemory': enableMemory,
     'autoOrganizeMemory': autoOrganizeMemory,
     'memoryOrganizeEveryNTurns': memoryOrganizeEveryNTurns,
+    'enableStoryMemory': enableStoryMemory,
+    'autoOrganizeStoryMemory': autoOrganizeStoryMemory,
+    'storyMemoryOrganizeEveryNTurns': storyMemoryOrganizeEveryNTurns,
+    'storyMemoryRecentTurnRetention': storyMemoryRecentTurnRetention,
+    'storyMemoryBudgetPercent': storyMemoryBudgetPercent,
+    'storyMemoryRequireConfirmation': storyMemoryRequireConfirmation,
     'memorySmartAddMode': memorySmartAddModeToString(memorySmartAddMode),
     'memoryWriteScope': memoryWriteScopeToString(memoryWriteScope),
     'allowPastConversationRecall': allowPastConversationRecall,
@@ -338,6 +384,37 @@ class Assistant {
       }
       return raw;
     })(),
+    enableStoryMemory: json['enableStoryMemory'] as bool? ?? false,
+    autoOrganizeStoryMemory: json['autoOrganizeStoryMemory'] as bool? ?? false,
+    storyMemoryOrganizeEveryNTurns: (() {
+      final raw = (json['storyMemoryOrganizeEveryNTurns'] as num?)?.toInt();
+      if (raw == null ||
+          raw < minStoryMemoryOrganizeEveryNTurns ||
+          raw > maxStoryMemoryOrganizeEveryNTurns) {
+        return defaultStoryMemoryOrganizeEveryNTurns;
+      }
+      return raw;
+    })(),
+    storyMemoryRecentTurnRetention: (() {
+      final raw = (json['storyMemoryRecentTurnRetention'] as num?)?.toInt();
+      if (raw == null ||
+          raw < minStoryMemoryRecentTurnRetention ||
+          raw > maxStoryMemoryRecentTurnRetention) {
+        return defaultStoryMemoryRecentTurnRetention;
+      }
+      return raw;
+    })(),
+    storyMemoryBudgetPercent: (() {
+      final raw = (json['storyMemoryBudgetPercent'] as num?)?.toInt();
+      if (raw == null ||
+          raw < minStoryMemoryBudgetPercent ||
+          raw > maxStoryMemoryBudgetPercent) {
+        return defaultStoryMemoryBudgetPercent;
+      }
+      return raw;
+    })(),
+    storyMemoryRequireConfirmation:
+        json['storyMemoryRequireConfirmation'] as bool? ?? false,
     memorySmartAddMode: memorySmartAddModeFromString(
       json['memorySmartAddMode'] as String?,
     ),

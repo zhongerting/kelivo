@@ -19,6 +19,7 @@ import '../../../core/providers/quick_phrase_provider.dart';
 import '../../../core/providers/instruction_injection_provider.dart';
 import '../../../core/providers/memory_provider.dart';
 import '../../../core/services/chat/chat_service.dart';
+import '../../../core/services/story_memory/story_memory_repository.dart';
 import '../../../core/services/tts/tts_text_selection.dart';
 import '../../../core/services/haptics.dart';
 import '../../../core/services/notification_service.dart';
@@ -86,6 +87,7 @@ class HomePageController extends ChangeNotifier {
     required TickerProvider vsync,
     required GlobalKey<ScaffoldState> scaffoldKey,
     required GlobalKey inputBarKey,
+    GlobalKey? bottomOverlayKey,
     required FocusNode inputFocus,
     required TextEditingController inputController,
     required ChatInputBarController mediaController,
@@ -97,6 +99,7 @@ class HomePageController extends ChangeNotifier {
          vsync,
          scaffoldKey,
          inputBarKey,
+         bottomOverlayKey ?? GlobalKey(),
          inputFocus,
          inputController,
          mediaController,
@@ -112,6 +115,7 @@ class HomePageController extends ChangeNotifier {
     this._vsync,
     this._scaffoldKey,
     this._inputBarKey,
+    this._bottomOverlayKey,
     this._inputFocus,
     this._inputController,
     this._mediaController,
@@ -130,6 +134,7 @@ class HomePageController extends ChangeNotifier {
   final TickerProvider _vsync;
   final GlobalKey<ScaffoldState> _scaffoldKey;
   final GlobalKey _inputBarKey;
+  final GlobalKey _bottomOverlayKey;
   final FocusNode _inputFocus;
   final TextEditingController _inputController;
   final ChatInputBarController _mediaController;
@@ -170,6 +175,7 @@ class HomePageController extends ChangeNotifier {
   /// Serial of the latest animated conversation transition; superseded
   /// transitions check it to discard their pre-commit work.
   int _switchSerial = 0;
+  bool _conversationSwitching = false;
 
   // Startup warm-up (cache plan measure 14): after the initial restore
   // completes, an idle-time serial prefetch of the most recent conversations.
@@ -250,6 +256,8 @@ class HomePageController extends ChangeNotifier {
 
   // Input bar measurement
   double _inputBarHeight = 72;
+  double _bottomOverlayHeight = 72;
+  bool _replyOptionSendInFlight = false;
 
   UserMessageEditState? _userMessageEditState;
 
@@ -264,6 +272,7 @@ class HomePageController extends ChangeNotifier {
 
   GlobalKey<ScaffoldState> get scaffoldKey => _scaffoldKey;
   GlobalKey get inputBarKey => _inputBarKey;
+  GlobalKey get bottomOverlayKey => _bottomOverlayKey;
   FocusNode get inputFocus => _inputFocus;
   TextEditingController get inputController => _inputController;
   ChatInputBarController get mediaController => _mediaController;
@@ -287,6 +296,26 @@ class HomePageController extends ChangeNotifier {
   double get embeddedSidebarWidth => _embeddedSidebarWidth;
   double get rightSidebarWidth => _rightSidebarWidth;
   double get inputBarHeight => _inputBarHeight;
+  double get bottomOverlayHeight => _bottomOverlayHeight;
+  bool get isConversationSwitching => _conversationSwitching;
+  bool get isAssistantSwitching {
+    final conversationAssistantId = currentConversation?.assistantId;
+    if (conversationAssistantId == null || conversationAssistantId.isEmpty) {
+      return false;
+    }
+    return _context.read<AssistantProvider>().currentAssistant?.id !=
+        conversationAssistantId;
+  }
+
+  bool get isCurrentConversationSending {
+    final conversationId = currentConversation?.id;
+    return _replyOptionSendInFlight ||
+        isCurrentConversationLoading ||
+        currentQueuedInput != null ||
+        (conversationId != null &&
+            _viewModel.isConversationSendInFlight(conversationId));
+  }
+
   bool get desktopUiInited => _desktopUiInited;
   bool get isGlobalSearchMode => _isGlobalSearchMode;
   String get globalSearchQuery => _globalSearchQuery;
@@ -468,6 +497,9 @@ class HomePageController extends ChangeNotifier {
       generationController: _generationController,
       streamController: _streamController,
       contextProvider: _context,
+      // Story memory is optional so lightweight controller hosts and older
+      // embedder setups can omit its provider without breaking chat startup.
+      storyMemoryRepository: _context.read<StoryMemoryRepository?>(),
     );
   }
 
@@ -1078,6 +1110,10 @@ class HomePageController extends ChangeNotifier {
     final serial = ++_switchSerial;
     _warmupSerial++;
     if (currentConversation?.id == id) {
+      if (_conversationSwitching) {
+        _conversationSwitching = false;
+        notifyListeners();
+      }
       // Already on the target: the serial bump above cancels any in-flight
       // switch; reveal the current list again in case a fade-out is pending
       // or in flight. forward() is a no-op when the list is fully visible.
@@ -1086,70 +1122,79 @@ class HomePageController extends ChangeNotifier {
       }
       return;
     }
-    // Invalidate in-flight select-all / toggle / invert for the prior chat.
-    _selectionEpoch++;
-    _exitUserMessageEdit(clearDraft: true);
+    _conversationSwitching = true;
+    notifyListeners();
+    try {
+      // Invalidate in-flight select-all / toggle / invert for the prior chat.
+      _selectionEpoch++;
+      _exitUserMessageEdit(clearDraft: true);
 
-    if (!isDesktopPlatform) {
-      // Fetch-then-commit: fade-out, progress flush, and the DB fetch run
-      // concurrently, but the fetched window is committed only after the
-      // fade-out completes so no new data flashes while opacity is not 0.
-      final fadeFuture = _reverseConvoFade();
-      final flushFuture = _flushProgressSilently();
-      final PreparedConversationSwitch? prepared;
-      try {
-        prepared = await _viewModel.prepareConversationSwitch(id);
-      } catch (_) {
-        if (serial == _switchSerial) await _forwardConvoFade();
-        rethrow;
-      }
-      if (serial != _switchSerial) return;
-      await Future.wait([fadeFuture, flushFuture]);
-      if (serial != _switchSerial) return;
-      if (prepared == null) {
-        // Target vanished; reveal the current list again.
-        await _forwardConvoFade();
-        return;
-      }
-      _viewModel.commitConversationSwitch(prepared);
-      _clearSelectionState();
-      notifyListeners();
-
-      try {
-        await WidgetsBinding.instance.endOfFrame;
-        if (serial != _switchSerial || currentConversation?.id != id) return;
-        // Resolve the real last item while the new conversation is still
-        // transparent. Its first maxScrollExtent can contain lazy estimates.
-        final activeScrollController = _scrollCtrl;
-        await activeScrollController.settleAtBottomBeforeReveal();
-        if (serial != _switchSerial ||
-            currentConversation?.id != id ||
-            !identical(_scrollCtrl, activeScrollController)) {
+      if (!isDesktopPlatform) {
+        // Fetch-then-commit: fade-out, progress flush, and the DB fetch run
+        // concurrently, but the fetched window is committed only after the
+        // fade-out completes so no new data flashes while opacity is not 0.
+        final fadeFuture = _reverseConvoFade();
+        final flushFuture = _flushProgressSilently();
+        final PreparedConversationSwitch? prepared;
+        try {
+          prepared = await _viewModel.prepareConversationSwitch(id);
+        } catch (_) {
+          if (serial == _switchSerial) await _forwardConvoFade();
+          rethrow;
+        }
+        if (serial != _switchSerial) return;
+        await Future.wait([fadeFuture, flushFuture]);
+        if (serial != _switchSerial) return;
+        if (prepared == null) {
+          // Target vanished; reveal the current list again.
+          await _forwardConvoFade();
           return;
         }
-        await _convoFadeController.forward();
-      } catch (_) {}
-    } else {
-      // Desktop uses the same prepare/commit atomicity as mobile, without
-      // fade: current conversation/selection stay unchanged until commit.
-      await _flushProgressSilently();
-      try {
-        _convoFadeController.stop();
-        _convoFadeController.value = 1.0;
-      } catch (_) {}
-      if (serial != _switchSerial) return;
-      final prepared = await _viewModel.prepareConversationSwitch(id);
-      if (serial != _switchSerial) return;
-      if (prepared == null) return;
-      _viewModel.commitConversationSwitch(prepared);
-      _clearSelectionState();
-      notifyListeners();
-    }
+        _viewModel.commitConversationSwitch(prepared);
+        _clearSelectionState();
+        notifyListeners();
 
-    if (isDesktopPlatform) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _inputFocus.requestFocus();
-      });
+        try {
+          await WidgetsBinding.instance.endOfFrame;
+          if (serial != _switchSerial || currentConversation?.id != id) return;
+          // Resolve the real last item while the new conversation is still
+          // transparent. Its first maxScrollExtent can contain lazy estimates.
+          final activeScrollController = _scrollCtrl;
+          await activeScrollController.settleAtBottomBeforeReveal();
+          if (serial != _switchSerial ||
+              currentConversation?.id != id ||
+              !identical(_scrollCtrl, activeScrollController)) {
+            return;
+          }
+          await _convoFadeController.forward();
+        } catch (_) {}
+      } else {
+        // Desktop uses the same prepare/commit atomicity as mobile, without
+        // fade: current conversation/selection stay unchanged until commit.
+        await _flushProgressSilently();
+        try {
+          _convoFadeController.stop();
+          _convoFadeController.value = 1.0;
+        } catch (_) {}
+        if (serial != _switchSerial) return;
+        final prepared = await _viewModel.prepareConversationSwitch(id);
+        if (serial != _switchSerial) return;
+        if (prepared == null) return;
+        _viewModel.commitConversationSwitch(prepared);
+        _clearSelectionState();
+        notifyListeners();
+      }
+
+      if (isDesktopPlatform) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _inputFocus.requestFocus();
+        });
+      }
+    } finally {
+      if (serial == _switchSerial && _conversationSwitching) {
+        _conversationSwitching = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -1173,29 +1218,38 @@ class HomePageController extends ChangeNotifier {
 
   Future<void> createNewConversationAnimated() async {
     // Cancel any in-flight conversation switch fetch.
-    _switchSerial++;
+    final serial = ++_switchSerial;
     _warmupSerial++;
     _selectionEpoch++;
+    _conversationSwitching = true;
+    notifyListeners();
     try {
-      await _viewModel.flushCurrentConversationProgress();
-    } catch (_) {}
-    _exitUserMessageEdit(clearDraft: true);
-    if (!isDesktopPlatform) {
       try {
-        await _convoFadeController.reverse();
+        await _viewModel.flushCurrentConversationProgress();
       } catch (_) {}
-    }
-    await _createNewConversation();
-    if (!isDesktopPlatform) {
-      try {
-        await WidgetsBinding.instance.endOfFrame;
-        await _convoFadeController.forward();
-      } catch (_) {}
-    }
-    if (isDesktopPlatform) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _inputFocus.requestFocus();
-      });
+      _exitUserMessageEdit(clearDraft: true);
+      if (!isDesktopPlatform) {
+        try {
+          await _convoFadeController.reverse();
+        } catch (_) {}
+      }
+      await _createNewConversation();
+      if (!isDesktopPlatform) {
+        try {
+          await WidgetsBinding.instance.endOfFrame;
+          await _convoFadeController.forward();
+        } catch (_) {}
+      }
+      if (isDesktopPlatform) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _inputFocus.requestFocus();
+        });
+      }
+    } finally {
+      if (serial == _switchSerial && _conversationSwitching) {
+        _conversationSwitching = false;
+        notifyListeners();
+      }
     }
   }
 
@@ -2407,6 +2461,20 @@ class HomePageController extends ChangeNotifier {
     } catch (_) {}
   }
 
+  void measureBottomOverlay() {
+    try {
+      final ctx = _bottomOverlayKey.currentContext;
+      if (ctx == null) return;
+      final box = ctx.findRenderObject() as RenderBox?;
+      if (box == null) return;
+      final h = box.size.height;
+      if ((_bottomOverlayHeight - h).abs() > 1.0) {
+        _bottomOverlayHeight = h;
+        notifyListeners();
+      }
+    } catch (_) {}
+  }
+
   // ============================================================================
   // Public Methods - Quick Phrases
   // ============================================================================
@@ -2420,23 +2488,43 @@ class HomePageController extends ChangeNotifier {
       return;
     }
 
-    final phrase = selected.phrase;
-    final text = _inputController.text;
-    final selection = _inputController.selection;
-    final start = (selection.start >= 0 && selection.start <= text.length)
-        ? selection.start
-        : text.length;
-    final end =
-        (selection.end >= 0 &&
-            selection.end <= text.length &&
-            selection.end >= start)
-        ? selection.end
-        : start;
+    insertTextAtSelection(selected.phrase.content);
+  }
 
-    final newText = text.replaceRange(start, end, phrase.content);
-    _inputController.value = _inputController.value.copyWith(
+  /// Sends an option through the normal chat path without touching the draft
+  /// text or attachments currently owned by [ChatInputBar].
+  Future<ChatInputSubmissionResult> sendReplyOption(String option) async {
+    final text = option.trim();
+    if (text.isEmpty || _replyOptionSendInFlight) {
+      return ChatInputSubmissionResult.rejected;
+    }
+
+    _replyOptionSendInFlight = true;
+    notifyListeners();
+    try {
+      return await sendMessage(ChatInputData(text: text));
+    } finally {
+      _replyOptionSendInFlight = false;
+      notifyListeners();
+    }
+  }
+
+  /// Inserts text at the current caret, replaces a valid selection, or
+  /// appends to the draft when the selection is unavailable.
+  void insertTextAtSelection(String insertion) {
+    final value = _inputController.value;
+    final text = value.text;
+    final selection = value.selection;
+    final hasValidSelection =
+        selection.start >= 0 &&
+        selection.end >= selection.start &&
+        selection.end <= text.length;
+    final start = hasValidSelection ? selection.start : text.length;
+    final end = hasValidSelection ? selection.end : text.length;
+    final newText = text.replaceRange(start, end, insertion);
+    _inputController.value = value.copyWith(
       text: newText,
-      selection: TextSelection.collapsed(offset: start + phrase.content.length),
+      selection: TextSelection.collapsed(offset: start + insertion.length),
       composing: TextRange.empty,
     );
     WidgetsBinding.instance.addPostFrameCallback((_) {

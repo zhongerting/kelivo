@@ -3680,10 +3680,10 @@ class ChatService extends ChangeNotifier {
           parts == null && temporaryOriginal.role == 'assistant';
       final resolvedParts =
           parts ??
-          ChatMessage.partsWithRedistributedText(
-            temporaryOriginal.parts,
-            content,
-          );
+          ChatMessage.partsWithRedistributedText([
+            for (final part in temporaryOriginal.parts)
+              if (part is! ReplyOptionsPart) part,
+          ], content);
       final newMsg = ChatMessage(
         role: temporaryOriginal.role,
         parts: resolvedParts,

@@ -15,6 +15,7 @@ import '../../../core/services/model_override_payload_parser.dart';
 import '../../../core/services/logging/flutter_logger.dart';
 import '../../../core/services/memory/memory_pipeline.dart';
 import '../../../core/services/memory/memory_trace.dart';
+import '../../../core/services/story_memory/story_memory_pipeline.dart';
 import '../../../core/utils/model_visible_history.dart';
 import '../../../utils/utf16_safe_cut.dart';
 import '../../../l10n/app_localizations.dart';
@@ -322,6 +323,7 @@ class HomeViewModel extends ChangeNotifier {
   void _onAssistantMessageFinished(ChatMessage message) {
     onAssistantMessageFinished?.call(message);
     _onMaybeOrganizeMemory(message.conversationId);
+    _onMaybeOrganizeStoryMemory(message.conversationId);
   }
 
   /// Schedule background memory organize after a successful finalize (§12.1).
@@ -348,6 +350,36 @@ class HomeViewModel extends ChangeNotifier {
     } catch (e, st) {
       FlutterLogger.log(
         '[MemoryPipeline] schedule failed: $e\n$st',
+        tag: 'HomeViewModel',
+      );
+    }
+  }
+
+  /// Schedule the independent conversation-scoped story-memory pipeline.
+  /// This optimization never shares the user-memory watermark or repository.
+  void _onMaybeOrganizeStoryMemory(String conversationId) {
+    try {
+      final convo = _chatService.getConversation(conversationId);
+      if (convo == null) return;
+      final assistantProvider = _contextProvider.read<AssistantProvider>();
+      final assistant = convo.assistantId != null
+          ? assistantProvider.getById(convo.assistantId!)
+          : assistantProvider.currentAssistant;
+      if (assistant == null ||
+          !assistant.enableStoryMemory ||
+          !assistant.autoOrganizeStoryMemory) {
+        return;
+      }
+      final pipeline = _contextProvider.read<StoryMemoryPipelineService>();
+      pipeline.scheduleIfNeeded(
+        conversationId: conversationId,
+        assistantId: assistant.id,
+        onError: (error) =>
+            onBackgroundTaskError?.call(BackgroundTaskKind.memory, error),
+      );
+    } catch (e, st) {
+      FlutterLogger.log(
+        '[StoryMemoryPipeline] schedule failed: $e\n$st',
         tag: 'HomeViewModel',
       );
     }

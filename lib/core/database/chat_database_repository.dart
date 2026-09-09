@@ -1896,17 +1896,13 @@ class ChatDatabaseRepository {
   }
 
   Future<Conversation?> getConversation(String id) async {
-    return _observer.measure(
-      ChatDatabaseOperation.queryConversation,
-      () async {
-        final row = await (_db.select(
-          _db.conversationRows,
-        )..where((t) => t.id.equals(id))).getSingleOrNull();
-        if (row == null) return null;
-        return _conversationFromRow(row);
-      },
-      resultCount: (conversation) => conversation == null ? 0 : 1,
-    );
+    return _observer.measure(ChatDatabaseOperation.queryConversation, () async {
+      final row = await (_db.select(
+        _db.conversationRows,
+      )..where((t) => t.id.equals(id))).getSingleOrNull();
+      if (row == null) return null;
+      return _conversationFromRow(row);
+    }, resultCount: (conversation) => conversation == null ? 0 : 1);
   }
 
   Future<int> getMessageCount(String conversationId) async {
@@ -4834,7 +4830,10 @@ class ChatDatabaseRepository {
       final preserveReasoning = parts == null && original.role == 'assistant';
       final resolvedParts =
           parts ??
-          ChatMessage.partsWithRedistributedText(original.parts, content);
+          ChatMessage.partsWithRedistributedText([
+            for (final part in original.parts)
+              if (part is! ReplyOptionsPart) part,
+          ], content);
       final message = ChatMessage(
         role: original.role,
         parts: resolvedParts,

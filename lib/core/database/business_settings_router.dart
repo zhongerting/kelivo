@@ -6,6 +6,7 @@ import 'business_data.dart';
 
 enum BusinessKeyDisposition {
   entity,
+  extension,
   providerOrder,
   preference,
   localOnly,
@@ -15,6 +16,8 @@ enum BusinessKeyDisposition {
 
 final class BusinessKeyRegistry {
   BusinessKeyRegistry._();
+
+  static const extensionEntitiesKey = 'extension_entities_v1';
 
   static const localOnlyKeys = <String>{
     'window_width_v1',
@@ -101,6 +104,7 @@ final class BusinessKeyRegistry {
     'suggestion_generation_enabled_v1',
     'suggestion_prompt_v1',
     'suggestion_insert_on_tap_only_v1',
+    'reply_options_expanded_v1',
     'compress_model_v1',
     'compress_prompt_v1',
     'thinking_budget_v1',
@@ -174,6 +178,9 @@ final class BusinessKeyRegistry {
   };
 
   static BusinessKeyDisposition classify(String key) {
+    if (key == extensionEntitiesKey) {
+      return BusinessKeyDisposition.extension;
+    }
     if (BusinessEntityKind.values.any((kind) => kind.sourceKey == key)) {
       return BusinessKeyDisposition.entity;
     }
@@ -229,6 +236,9 @@ final class BusinessSettingsRouter {
   }) {
     final normalized = Map<String, Object?>.from(source);
     final rowIdsByKind = _rowIdsByKind(entityRowIds, source);
+    final extensionEntities = _routeExtensionEntities(
+      normalized[BusinessKeyRegistry.extensionEntitiesKey],
+    );
     final rawMigrationVersion = normalized['migrations_version_v1'];
     final shouldNormalizeLegacyEmbeddingOverrides = rawMigrationVersion is int
         ? rawMigrationVersion < 3
@@ -256,6 +266,7 @@ final class BusinessSettingsRouter {
     for (final entry in normalized.entries) {
       final disposition = BusinessKeyRegistry.classify(entry.key);
       if (disposition == BusinessKeyDisposition.entity ||
+          disposition == BusinessKeyDisposition.extension ||
           disposition == BusinessKeyDisposition.localOnly ||
           disposition == BusinessKeyDisposition.discarded ||
           entry.key == _providerOrderKey) {
@@ -265,7 +276,11 @@ final class BusinessSettingsRouter {
       if (value == null) continue;
       preferences[entry.key] = _validatePreferenceValue(entry.key, value);
     }
-    return BusinessSnapshot(entities: entities, preferences: preferences);
+    return BusinessSnapshot(
+      entities: entities,
+      preferences: preferences,
+      extensionEntities: extensionEntities,
+    );
   }
 
   static Map<String, Object> exportSnapshot(BusinessSnapshot snapshot) {
@@ -290,6 +305,22 @@ final class BusinessSettingsRouter {
         );
       }
     }
+    final extensionRows = List<BusinessExtensionEntityValue>.of(
+      snapshot.extensionEntities,
+    )..sort(_compareExtensionRows);
+    result[BusinessKeyRegistry.extensionEntitiesKey] = jsonEncode([
+      for (final row in extensionRows)
+        {
+          'kind': row.kind,
+          'id': row.id,
+          'sortOrder': row.sortOrder,
+          if (row.ownerId != null) 'ownerId': row.ownerId,
+          'payload': _decodePayload(
+            row.payload,
+            BusinessKeyRegistry.extensionEntitiesKey,
+          ),
+        },
+    ]);
     result.addAll(snapshot.preferences);
     return result;
   }
@@ -488,6 +519,9 @@ final class BusinessSettingsRouter {
             'background',
             'memorySmartAddMode',
             'memoryWriteScope',
+            'mode',
+            'characterPrompt',
+            'firstMessage',
           },
           booleans: const {
             'useAssistantAvatar',
@@ -502,6 +536,10 @@ final class BusinessSettingsRouter {
             'allowPastConversationRecall',
             'generateConversationSummary',
             'appendCurrentTimeToUserMessage',
+            'enableStoryMemory',
+            'autoOrganizeStoryMemory',
+            'storyMemoryRequireConfirmation',
+            'excludeThinkingFromContext',
           },
           numbers: const {
             'temperature',
@@ -511,6 +549,9 @@ final class BusinessSettingsRouter {
             'maxTokens',
             'recentChatsSummaryMessageCount',
             'memoryOrganizeEveryNTurns',
+            'storyMemoryOrganizeEveryNTurns',
+            'storyMemoryRecentTurnRetention',
+            'storyMemoryBudgetPercent',
           },
           lists: const {
             'customHeaders',
@@ -1173,6 +1214,7 @@ final class BusinessSettingsRouter {
     };
     final result = <BusinessEntityKind, List<String>>{};
     for (final entry in raw.entries) {
+      if (entry.key == BusinessKeyRegistry.extensionEntitiesKey) continue;
       final kind = kindByKey[entry.key];
       if (kind == null) throw FormatException(entry.key);
       final value = entry.value;
@@ -1194,6 +1236,70 @@ final class BusinessSettingsRouter {
       }
     }
     return result;
+  }
+
+  static List<BusinessExtensionEntityValue> _routeExtensionEntities(
+    Object? raw,
+  ) {
+    if (raw == null) return const <BusinessExtensionEntityValue>[];
+    final decoded = _decodeJson(raw, BusinessKeyRegistry.extensionEntitiesKey);
+    if (decoded is! List) {
+      throw FormatException(BusinessKeyRegistry.extensionEntitiesKey);
+    }
+    final seen = <String>{};
+    final result = <BusinessExtensionEntityValue>[];
+    for (final item in decoded) {
+      if (item is! Map) {
+        throw FormatException(BusinessKeyRegistry.extensionEntitiesKey);
+      }
+      final map = item.map((key, value) => MapEntry(key.toString(), value));
+      final kind = map['kind'];
+      final id = map['id'];
+      final sortOrder = map['sortOrder'];
+      final ownerId = map['ownerId'];
+      final payload = map['payload'];
+      if (kind is! String ||
+          kind.trim().isEmpty ||
+          !kind.startsWith('story_') ||
+          id is! String ||
+          id.trim().isEmpty ||
+          sortOrder is! int ||
+          sortOrder < 0 ||
+          (ownerId != null && ownerId is! String) ||
+          (ownerId is String && ownerId.trim().isEmpty) ||
+          payload is! Map) {
+        throw FormatException(BusinessKeyRegistry.extensionEntitiesKey);
+      }
+      final key = '$kind\u0000$id';
+      if (!seen.add(key)) {
+        throw FormatException(BusinessKeyRegistry.extensionEntitiesKey);
+      }
+      final payloadMap = payload.map(
+        (key, value) => MapEntry(key.toString(), value),
+      );
+      result.add(
+        BusinessExtensionEntityValue(
+          kind: kind,
+          id: id,
+          sortOrder: sortOrder,
+          ownerId: ownerId as String?,
+          payload: jsonEncode(payloadMap),
+        ),
+      );
+    }
+    return result;
+  }
+
+  static int _compareExtensionRows(
+    BusinessExtensionEntityValue left,
+    BusinessExtensionEntityValue right,
+  ) {
+    final byKind = left.kind.compareTo(right.kind);
+    if (byKind != 0) return byKind;
+    final byOwner = (left.ownerId ?? '').compareTo(right.ownerId ?? '');
+    if (byOwner != 0) return byOwner;
+    final byOrder = left.sortOrder.compareTo(right.sortOrder);
+    return byOrder != 0 ? byOrder : left.id.compareTo(right.id);
   }
 
   static String _stableGeneratedId(

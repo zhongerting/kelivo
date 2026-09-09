@@ -3996,5 +3996,20 @@
   "assistantEditFirstMessageHint": "The first assistant message in each new conversation…",
   "assistantEditExcludeThinkingTitle": "Exclude past reasoning from future context",
   "assistantEditExcludeThinkingSubtitle": "Keep reasoning visible locally, but send only completed answers from earlier turns.",
-  "contextLogSourceCharacterPrompt": "Character settings"
+  "contextLogSourceCharacterPrompt": "Character settings",
+  "contextLogSourceStoryMemory": "Story memory",
+  "replyOptionsTitle": "Reply options",
+  "replyOptionsCount": "{count} options",
+  "@replyOptionsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "replyOptionsAppend": "Append",
+  "replyOptionsAppendTooltip": "Append this option to the input",
+  "replyOptionsSendTooltip": "Send this option",
+  "replyOptionsExpand": "Expand reply options",
+  "replyOptionsCollapse": "Collapse reply options"
 }

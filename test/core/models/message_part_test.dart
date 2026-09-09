@@ -86,6 +86,47 @@ void main() {
       expect(decoded['assetId'], 'asset-2');
     });
 
+    test('ReplyOptionsPart roundtrips structured payload', () {
+      final part = ReplyOptionsPart(
+        assistantId: 'assistant-1',
+        options: const ['调查房间', '询问对方\n的秘密'],
+      );
+
+      expect(part.kind, 'reply_options');
+      final decoded = jsonDecode(part.encodePayload()) as Map<String, dynamic>;
+      expect(decoded, {
+        'version': 1,
+        'assistantId': 'assistant-1',
+        'options': ['调查房间', '询问对方\n的秘密'],
+      });
+
+      final restored = MessagePart.fromRow(
+        'reply_options',
+        part.encodePayload(),
+      );
+      expect(restored, part);
+      expect((restored as ReplyOptionsPart).options, isA<List<String>>());
+    });
+
+    test('ReplyOptionsPart rejects malformed and unsupported payloads', () {
+      for (final payload in [
+        '{}',
+        '{"version":2,"assistantId":"a","options":["x"]}',
+        '{"version":1,"assistantId":"","options":["x"]}',
+        '{"version":1,"assistantId":"a","options":[]}',
+        '{"version":1,"assistantId":"a","options":["x","x"]}',
+        '{"version":1,"assistantId":"a","options":[1]}',
+        '{"version":1,"assistantId":"a","options":[" x"]}',
+        '{"version":1,"assistantId":"a","options":["x","y","z","1","2","3","4"]}',
+      ]) {
+        expect(
+          () => MessagePart.fromRow('reply_options', payload),
+          throwsA(isA<FormatException>()),
+          reason: payload,
+        );
+      }
+    });
+
     test('optional mime/assetId/unavailable omit preserve semantics', () {
       final imagePayload = jsonEncode({'uri': 'https://example.com/a.png'});
       final image = MessagePart.fromRow('image', imagePayload) as ImagePart;

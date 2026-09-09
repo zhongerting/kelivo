@@ -1,5 +1,42 @@
 typedef BusinessEntityRowIds = Map<String, List<String>>;
 
+/// A row stored in the schema-less extension table.
+///
+/// Extension rows are deliberately kept outside [BusinessEntityKind]. The
+/// latter describes the legacy key/value projection used by providers, while
+/// extensions may be scoped by an arbitrary owner and are not runtime
+/// preferences. The backup layer still carries them through the same
+/// business snapshot so settings-only restores do not lose feature data.
+final class BusinessExtensionEntityValue {
+  const BusinessExtensionEntityValue({
+    required this.kind,
+    required this.id,
+    required this.sortOrder,
+    required this.payload,
+    this.ownerId,
+  });
+
+  final String kind;
+  final String id;
+  final int sortOrder;
+  final String? ownerId;
+  final String payload;
+
+  BusinessExtensionEntityValue copyWith({
+    String? kind,
+    String? id,
+    int? sortOrder,
+    String? ownerId,
+    String? payload,
+  }) => BusinessExtensionEntityValue(
+    kind: kind ?? this.kind,
+    id: id ?? this.id,
+    sortOrder: sortOrder ?? this.sortOrder,
+    ownerId: ownerId ?? this.ownerId,
+    payload: payload ?? this.payload,
+  );
+}
+
 typedef BusinessSettingsExport = ({
   Map<String, Object> settings,
   BusinessEntityRowIds entityRowIds,
@@ -73,16 +110,21 @@ final class BusinessSnapshot {
   BusinessSnapshot({
     required Map<BusinessEntityKind, List<BusinessEntityValue>> entities,
     required Map<String, Object> preferences,
+    List<BusinessExtensionEntityValue> extensionEntities = const [],
   }) : entities = {
          for (final kind in BusinessEntityKind.values)
            kind: List<BusinessEntityValue>.unmodifiable(
              entities[kind] ?? const <BusinessEntityValue>[],
            ),
        },
-       preferences = Map<String, Object>.unmodifiable(preferences);
+       preferences = Map<String, Object>.unmodifiable(preferences),
+       extensionEntities = List<BusinessExtensionEntityValue>.unmodifiable(
+         extensionEntities,
+       );
 
   final Map<BusinessEntityKind, List<BusinessEntityValue>> entities;
   final Map<String, Object> preferences;
+  final List<BusinessExtensionEntityValue> extensionEntities;
 
   int entityCount(BusinessEntityKind kind) => entities[kind]!.length;
 }

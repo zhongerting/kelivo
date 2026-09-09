@@ -8817,6 +8817,32 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get contextLogSourceCharacterPrompt => '人物设定';
+
+  @override
+  String get contextLogSourceStoryMemory => '故事记忆';
+
+  @override
+  String get replyOptionsTitle => '剧情选项';
+
+  @override
+  String replyOptionsCount(int count) {
+    return '$count 个选项';
+  }
+
+  @override
+  String get replyOptionsAppend => '追加';
+
+  @override
+  String get replyOptionsAppendTooltip => '将此选项追加到输入框';
+
+  @override
+  String get replyOptionsSendTooltip => '发送此选项';
+
+  @override
+  String get replyOptionsExpand => '展开剧情选项';
+
+  @override
+  String get replyOptionsCollapse => '收起剧情选项';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -17535,6 +17561,32 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get contextLogSourceCharacterPrompt => '人物设定';
+
+  @override
+  String get contextLogSourceStoryMemory => '故事记忆';
+
+  @override
+  String get replyOptionsTitle => '剧情选项';
+
+  @override
+  String replyOptionsCount(int count) {
+    return '$count 个选项';
+  }
+
+  @override
+  String get replyOptionsAppend => '追加';
+
+  @override
+  String get replyOptionsAppendTooltip => '将此选项追加到输入框';
+
+  @override
+  String get replyOptionsSendTooltip => '发送此选项';
+
+  @override
+  String get replyOptionsExpand => '展开剧情选项';
+
+  @override
+  String get replyOptionsCollapse => '收起剧情选项';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -26327,4 +26379,30 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get contextLogSourceCharacterPrompt => '人物設定';
+
+  @override
+  String get contextLogSourceStoryMemory => '故事記憶';
+
+  @override
+  String get replyOptionsTitle => '劇情選項';
+
+  @override
+  String replyOptionsCount(int count) {
+    return '$count 個選項';
+  }
+
+  @override
+  String get replyOptionsAppend => '追加';
+
+  @override
+  String get replyOptionsAppendTooltip => '將此選項追加到輸入框';
+
+  @override
+  String get replyOptionsSendTooltip => '傳送此選項';
+
+  @override
+  String get replyOptionsExpand => '展開劇情選項';
+
+  @override
+  String get replyOptionsCollapse => '收起劇情選項';
 }

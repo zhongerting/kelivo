@@ -9219,4 +9219,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get contextLogSourceCharacterPrompt => 'Character settings';
+
+  @override
+  String get contextLogSourceStoryMemory => 'Story memory';
+
+  @override
+  String get replyOptionsTitle => 'Reply options';
+
+  @override
+  String replyOptionsCount(int count) {
+    return '$count options';
+  }
+
+  @override
+  String get replyOptionsAppend => 'Append';
+
+  @override
+  String get replyOptionsAppendTooltip => 'Append this option to the input';
+
+  @override
+  String get replyOptionsSendTooltip => 'Send this option';
+
+  @override
+  String get replyOptionsExpand => 'Expand reply options';
+
+  @override
+  String get replyOptionsCollapse => 'Collapse reply options';
 }

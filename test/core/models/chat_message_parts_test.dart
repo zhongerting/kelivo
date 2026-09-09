@@ -206,13 +206,14 @@ void main() {
     test(
       'partsWithoutThinkingAndToolCards keeps only edited text and attachments',
       () {
-        final next = ChatMessage.partsWithoutThinkingAndToolCards(const [
+        final next = ChatMessage.partsWithoutThinkingAndToolCards([
           ReasoningPart('plan'),
           TextPart('hello '),
           ToolCallPart('{"id":"call_1","name":"lookup"}'),
           TextPart('world'),
           ReasoningPart('check'),
           ImagePart(uri: '/tmp/out.png', mime: 'image/png'),
+          ReplyOptionsPart(assistantId: 'assistant-1', options: ['old']),
         ], 'edited answer');
 
         expect(next.map((part) => part.kind), ['text', 'image']);
@@ -309,6 +310,30 @@ void main() {
           expect(part.encodePayload().contains('[image:'), isFalse);
           expect(part.encodePayload().contains('[file:'), isFalse);
         }
+      },
+    );
+
+    test(
+      'toJson/fromJson preserves reply options without adding body text',
+      () {
+        final original = ChatMessage(
+          id: 'assistant-reply-options',
+          role: 'assistant',
+          conversationId: 'c1',
+          parts: [
+            const TextPart('正文'),
+            ReplyOptionsPart(
+              assistantId: 'assistant-1',
+              options: const ['继续调查', '离开房间'],
+            ),
+          ],
+        );
+
+        final restored = ChatMessage.fromJson(original.toJson());
+        expect(restored.content, '正文');
+        expect(restored.parts, hasLength(2));
+        expect(restored.parts[1], isA<ReplyOptionsPart>());
+        expect(restored.parts[1], original.parts[1]);
       },
     );
 

@@ -16,6 +16,7 @@ enum ContextSource {
   worldBook,
   promptPreset,
   memorySnapshot,
+  storyMemory,
   chatHistory,
   toolCall,
   toolResult,

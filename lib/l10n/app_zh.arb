@@ -3322,5 +3322,20 @@
   "assistantEditFirstMessageHint": "每个新对话中的第一条助手消息……",
   "assistantEditExcludeThinkingTitle": "从未来上下文中排除历史推理",
   "assistantEditExcludeThinkingSubtitle": "推理仍保留在本地显示，只把之前轮次的最终回答发送给模型。",
-  "contextLogSourceCharacterPrompt": "人物设定"
+  "contextLogSourceCharacterPrompt": "人物设定",
+  "contextLogSourceStoryMemory": "故事记忆",
+  "replyOptionsTitle": "剧情选项",
+  "replyOptionsCount": "{count} 个选项",
+  "@replyOptionsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "replyOptionsAppend": "追加",
+  "replyOptionsAppendTooltip": "将此选项追加到输入框",
+  "replyOptionsSendTooltip": "发送此选项",
+  "replyOptionsExpand": "展开剧情选项",
+  "replyOptionsCollapse": "收起剧情选项"
 }

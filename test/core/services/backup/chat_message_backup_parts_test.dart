@@ -237,6 +237,48 @@ void main() {
     },
   );
 
+  test('new chats.json preserves reply options as a non-body part', () async {
+    final original = ChatMessage(
+      id: 'm-reply-options',
+      role: 'assistant',
+      conversationId: 'c-reply-options',
+      parts: [
+        const TextPart('正文'),
+        ReplyOptionsPart(
+          assistantId: 'assistant-1',
+          options: const ['继续调查', '离开这里'],
+        ),
+      ],
+    );
+    final zip = await writeLegacyZip(
+      chats: {
+        'conversations': [
+          Conversation(
+            id: 'c-reply-options',
+            title: 'Reply options',
+            messageIds: const ['m-reply-options'],
+          ).toJson(),
+        ],
+        'messages': [original.toJson()],
+      },
+    );
+
+    final sync = DataSync(
+      businessRepository: businessRepository,
+      chatService: chatService,
+    );
+    await sync.restoreFromLocalFile(
+      zip,
+      const WebDavConfig(includeChats: true, includeFiles: false),
+      mode: RestoreMode.overwrite,
+    );
+
+    final restored = (await chatService.loadMessages('c-reply-options')).single;
+    expect(restored.content, '正文');
+    expect(restored.parts, hasLength(2));
+    expect(restored.parts[1], original.parts[1]);
+  });
+
   test(
     'new chats.json with literal [image:] text in parts is not promoted',
     () async {

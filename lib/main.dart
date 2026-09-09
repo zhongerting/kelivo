@@ -40,6 +40,8 @@ import 'core/providers/local_snapshot_provider.dart';
 import 'features/backup/local_snapshot_scheduler.dart';
 import 'core/services/memory/memory_pipeline.dart';
 import 'core/services/memory/memory_repository.dart';
+import 'core/services/story_memory/story_memory_pipeline.dart';
+import 'core/services/story_memory/story_memory_repository.dart';
 import 'core/providers/s3_backup_provider.dart';
 import 'core/providers/backup_reminder_provider.dart';
 import 'core/providers/hotkey_provider.dart';
@@ -626,6 +628,19 @@ class MyApp extends StatelessWidget {
           create: (_) => MemoryProviderV2(
             repository: MemoryRepository(businessPreferences),
             chatRepository: databaseLease.chatRepository,
+          ),
+        ),
+        Provider<StoryMemoryRepository>(
+          create: (ctx) => StoryMemoryRepository(
+            businessRepository: ctx.read<BusinessRepository>(),
+          ),
+        ),
+        Provider<StoryMemoryPipelineService>(
+          create: (ctx) => StoryMemoryPipelineService(
+            chatService: ctx.read<ChatService>(),
+            repository: ctx.read<StoryMemoryRepository>(),
+            settings: () => ctx.read<SettingsProvider>(),
+            assistants: () => ctx.read<AssistantProvider>(),
           ),
         ),
         Provider<MemoryPipelineService>(

@@ -110,6 +110,7 @@ class SettingsProvider extends ChangeNotifier {
   static const String _suggestionPromptKey = 'suggestion_prompt_v1';
   static const String _suggestionInsertOnTapOnlyKey =
       'suggestion_insert_on_tap_only_v1';
+  static const String _replyOptionsExpandedKey = 'reply_options_expanded_v1';
   static const String _compressModelKey = 'compress_model_v1';
   static const String _compressPromptKey = 'compress_prompt_v1';
   static const String _compressLimitModeKey = 'compress_limit_mode_v1';
@@ -929,6 +930,7 @@ class SettingsProvider extends ChangeNotifier {
         : suggestionp;
     _insertSuggestionOnTapOnly =
         prefs.getBool(_suggestionInsertOnTapOnlyKey) ?? false;
+    _replyOptionsExpanded = prefs.getBool(_replyOptionsExpandedKey) ?? true;
     // load compress model
     final compressSel = prefs.getString(_compressModelKey);
     if (compressSel != null && compressSel.contains('::')) {
@@ -3954,6 +3956,16 @@ Rules:
     await prefs.setBool(_suggestionInsertOnTapOnlyKey, value);
   }
 
+  bool _replyOptionsExpanded = true;
+  bool get replyOptionsExpanded => _replyOptionsExpanded;
+
+  Future<void> setReplyOptionsExpanded(bool value) async {
+    if (_replyOptionsExpanded == value) return;
+    _replyOptionsExpanded = value;
+    notifyListeners();
+    await _preferences.setBool(_replyOptionsExpandedKey, value);
+  }
+
   // Compress model and prompt
   String? _compressModelProvider;
   String? _compressModelId;
@@ -5695,6 +5707,7 @@ Requirements:
     copy._suggestionGenerationEnabled = _suggestionGenerationEnabled;
     copy._suggestionPrompt = _suggestionPrompt;
     copy._insertSuggestionOnTapOnly = _insertSuggestionOnTapOnly;
+    copy._replyOptionsExpanded = _replyOptionsExpanded;
     copy._compressModelProvider = _compressModelProvider;
     copy._compressModelId = _compressModelId;
     copy._compressPrompt = _compressPrompt;

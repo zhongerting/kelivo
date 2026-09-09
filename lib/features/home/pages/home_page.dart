@@ -54,12 +54,14 @@ import '../widgets/scroll_nav_buttons.dart';
 import '../widgets/message_list_view.dart';
 import '../widgets/chat_input_section.dart';
 import '../widgets/chat_input_overlay_layout.dart';
+import '../widgets/reply_options_panel.dart';
 import '../widgets/chat_selection_app_bar.dart';
 import '../widgets/chat_selection_delete_bar.dart';
 import '../widgets/chat_selection_export_bar.dart';
 import '../widgets/user_message_edit_overlay.dart';
 import '../utils/model_display_helper.dart';
 import '../utils/chat_layout_constants.dart';
+import '../../../core/utils/reply_options_selector.dart';
 import '../controllers/home_page_controller.dart';
 import '../controllers/scroll_controller.dart' as scroll_ctrl;
 import 'home_mobile_layout.dart';
@@ -701,6 +703,7 @@ class _HomePageState extends State<HomePage>
   bool _scrollNavHovering = false;
   double _lastViewInsetBottom = 0;
   StreamSubscription<String>? _processTextSub;
+  final GlobalKey _bottomOverlayKey = GlobalKey();
 
   // ============================================================================
   // Page Controller (manages all business logic and state)
@@ -724,6 +727,7 @@ class _HomePageState extends State<HomePage>
       vsync: this,
       scaffoldKey: _scaffoldKey,
       inputBarKey: _inputBarKey,
+      bottomOverlayKey: _bottomOverlayKey,
       inputFocus: _inputFocus,
       inputController: _inputController,
       mediaController: _mediaController,
@@ -741,6 +745,7 @@ class _HomePageState extends State<HomePage>
         _lastViewInsetBottom = View.of(context).viewInsets.bottom;
       }
       _controller.measureInputBar();
+      _controller.measureBottomOverlay();
       if (!mounted) return;
       context.read<WorldBookProvider>().initialize();
     });
@@ -971,7 +976,7 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildMobileBody(BuildContext context, ColorScheme cs) {
-    final bottomContentPadding = _controller.inputBarHeight + 16;
+    final bottomContentPadding = _controller.bottomOverlayHeight + 16;
     final topContentPadding = _chatTopOverlayInset(context) + 8;
     final backgroundImageActive = _assistantBackgroundActive(context);
 
@@ -1006,22 +1011,7 @@ class _HomePageState extends State<HomePage>
           );
         },
       ),
-      bottomOverlay: _controller.selecting
-          ? _buildSelectionActionBar(context)
-          : NotificationListener<SizeChangedLayoutNotification>(
-              onNotification: (n) {
-                WidgetsBinding.instance.addPostFrameCallback(
-                  (_) => _controller.measureInputBar(),
-                );
-                return false;
-              },
-              child: SizeChangedLayoutNotifier(
-                child: Builder(
-                  builder: (context) =>
-                      _buildChatInputBar(context, isTablet: false),
-                ),
-              ),
-            ),
+      bottomOverlay: _buildChatBottomOverlay(context, isTablet: false),
       foreground: _buildForegroundOverlay(context),
     );
   }
@@ -1166,7 +1156,7 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _buildTabletBody(BuildContext context, ColorScheme cs) {
-    final bottomContentPadding = _controller.inputBarHeight + 16;
+    final bottomContentPadding = _controller.bottomOverlayHeight + 16;
     final topContentPadding = _chatTopOverlayInset(context) + 8;
     final backgroundImageActive = _assistantBackgroundActive(context);
 
@@ -1195,37 +1185,7 @@ class _HomePageState extends State<HomePage>
           ),
         ),
       ),
-      bottomOverlay: _controller.selecting
-          ? ConstrainedBox(
-              constraints: const BoxConstraints(
-                maxWidth: ChatLayoutConstants.maxInputWidth,
-              ),
-              child: _buildSelectionActionBar(context),
-            )
-          : NotificationListener<SizeChangedLayoutNotification>(
-              onNotification: (n) {
-                WidgetsBinding.instance.addPostFrameCallback(
-                  (_) => _controller.measureInputBar(),
-                );
-                return false;
-              },
-              child: SizeChangedLayoutNotifier(
-                child: Builder(
-                  builder: (context) {
-                    Widget input = _buildChatInputBar(context, isTablet: true);
-                    input = Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(
-                          maxWidth: ChatLayoutConstants.maxInputWidth,
-                        ),
-                        child: input,
-                      ),
-                    );
-                    return input;
-                  },
-                ),
-              ),
-            ),
+      bottomOverlay: _buildChatBottomOverlay(context, isTablet: true),
       foreground: _buildForegroundOverlay(context),
     );
   }
@@ -1233,6 +1193,74 @@ class _HomePageState extends State<HomePage>
   // ============================================================================
   // UI Component Builders
   // ============================================================================
+
+  Widget _buildChatBottomOverlay(
+    BuildContext context, {
+    required bool isTablet,
+  }) {
+    Widget content;
+    if (_controller.selecting) {
+      content = _buildSelectionActionBar(context);
+    } else {
+      content = Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _buildReplyOptionsPanel(context),
+          _buildChatInputBar(context, isTablet: isTablet),
+        ],
+      );
+    }
+
+    if (isTablet) {
+      content = Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(
+            maxWidth: ChatLayoutConstants.maxInputWidth,
+          ),
+          child: content,
+        ),
+      );
+    }
+
+    return NotificationListener<SizeChangedLayoutNotification>(
+      onNotification: (_) {
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _controller.measureInputBar();
+          _controller.measureBottomOverlay();
+        });
+        return false;
+      },
+      child: SizeChangedLayoutNotifier(key: _bottomOverlayKey, child: content),
+    );
+  }
+
+  Widget _buildReplyOptionsPanel(BuildContext context) {
+    final settings = context.watch<SettingsProvider>();
+    final assistant = context.watch<AssistantProvider>().currentAssistant;
+    final options = selectReplyOptions(
+      messages: _controller.chatController.collapsedMessages,
+      versionSelections: _controller.versionSelections,
+      assistantId: assistant?.id,
+      conversationId: _controller.currentConversation?.id,
+      conversationSwitching: _controller.isConversationSwitching,
+      assistantSwitching: _controller.isAssistantSwitching,
+      selectingMessages: _controller.selecting,
+      sending: _controller.isCurrentConversationSending,
+    );
+    return ReplyOptionsPanel(
+      options: options,
+      expanded: settings.replyOptionsExpanded,
+      onExpandedChanged: (expanded) {
+        unawaited(settings.setReplyOptionsExpanded(expanded));
+      },
+      onSend: (option) async {
+        await _controller.sendReplyOption(option);
+      },
+      onAppend: _controller.insertTextAtSelection,
+      enabled: !_controller.isCurrentConversationSending,
+    );
+  }
 
   Widget _buildAssistantBackground(BuildContext context) {
     return const ChatAssistantBackground(
@@ -1521,7 +1549,7 @@ class _HomePageState extends State<HomePage>
                   setState(() => _scrollNavHovering = hovering);
                 }
               : null,
-          bottomOffset: _controller.inputBarHeight + 12,
+          bottomOffset: _controller.bottomOverlayHeight + 12,
           onScrollToTop: () => _controller.scrollToTop(animate: false),
           onPreviousMessage: _controller.jumpToPreviousQuestion,
           onNextMessage: _controller.jumpToNextQuestion,
@@ -1541,7 +1569,7 @@ class _HomePageState extends State<HomePage>
           visible: editState != null && !_controller.selecting,
           previewText: editState?.previewText ?? '',
           topInset: _chatTopOverlayInset(context),
-          bottomInset: _controller.inputBarHeight,
+          bottomInset: _controller.bottomOverlayHeight,
           onCancel: _controller.cancelUserMessageEdit,
           onSaveOnly: () {
             unawaited(_controller.saveUserMessageEditOnly());

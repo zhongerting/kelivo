@@ -21,6 +21,85 @@ final class BusinessRepository {
   Future<List<BusinessEntityValue>> readEntities(BusinessEntityKind kind) =>
       _readEntities(kind);
 
+  /// Reads schema-less extension rows, optionally narrowed by kind and owner.
+  ///
+  /// The query is intentionally exposed as a small repository API instead of
+  /// allowing feature code to reach into the Drift database. That keeps the
+  /// transaction boundary usable by features such as story memory and keeps
+  /// business backup/restore on one consistent snapshot.
+  Future<List<BusinessExtensionEntityValue>> readExtensionEntities({
+    String? kind,
+    String? ownerId,
+  }) async {
+    final clauses = <String>[];
+    final variables = <Variable<Object>>[];
+    if (kind != null) {
+      clauses.add('kind = ?');
+      variables.add(Variable<String>(kind));
+    }
+    if (ownerId != null) {
+      clauses.add('owner_id = ?');
+      variables.add(Variable<String>(ownerId));
+    }
+    final where = clauses.isEmpty ? '' : ' WHERE ${clauses.join(' AND ')}';
+    final rows = await _database
+        .customSelect(
+          'SELECT kind, id, sort_order, owner_id, payload '
+          'FROM extension_entity_rows$where '
+          'ORDER BY kind, owner_id, sort_order, id;',
+          variables: variables,
+          readsFrom: {_database.extensionEntityRows},
+        )
+        .get();
+    return List<BusinessExtensionEntityValue>.unmodifiable(
+      rows.map(
+        (row) => BusinessExtensionEntityValue(
+          kind: row.read<String>('kind'),
+          id: row.read<String>('id'),
+          sortOrder: row.read<int>('sort_order'),
+          ownerId: row.readNullable<String>('owner_id'),
+          payload: row.read<String>('payload'),
+        ),
+      ),
+    );
+  }
+
+  Future<void> replaceExtensionEntities(
+    List<BusinessExtensionEntityValue> rows,
+  ) async {
+    _validateExtensionRows(rows);
+    await _database.transaction(() => _replaceExtensionEntities(rows));
+  }
+
+  Future<void> upsertExtensionEntity(BusinessExtensionEntityValue row) async {
+    _validateExtensionRows(<BusinessExtensionEntityValue>[row]);
+    await _upsertExtensionEntity(
+      row,
+      updatedAt: DateTime.now().toUtc().microsecondsSinceEpoch,
+    );
+  }
+
+  Future<void> deleteExtensionEntity({
+    required String kind,
+    required String id,
+    String? ownerId,
+  }) async {
+    if (kind.isEmpty || id.isEmpty) return;
+    final where = ownerId == null
+        ? 'kind = ? AND id = ? AND owner_id IS NULL'
+        : 'kind = ? AND id = ? AND owner_id = ?';
+    final variables = <Object?>[kind, id, if (ownerId != null) ownerId];
+    await _database.customStatement(
+      'DELETE FROM extension_entity_rows WHERE $where;',
+      variables,
+    );
+  }
+
+  /// Runs feature writes in the same SQLite transaction as other business
+  /// repository operations. The callback must use this repository's methods.
+  Future<T> transaction<T>(Future<T> Function() operation) =>
+      _database.transaction(operation);
+
   Future<List<BusinessEntityValue>> readMemoriesForAssistant(
     String assistantId,
   ) async {
@@ -195,6 +274,7 @@ final class BusinessRepository {
     return BusinessSnapshot(
       entities: entities,
       preferences: await preferenceSnapshot(),
+      extensionEntities: await readExtensionEntities(),
     );
   }
 
@@ -202,6 +282,7 @@ final class BusinessRepository {
     for (final kind in BusinessEntityKind.values) {
       _validateRows(kind, snapshot.entities[kind]!);
     }
+    _validateExtensionRows(snapshot.extensionEntities);
     final preferences = <String, Object>{};
     for (final entry in snapshot.preferences.entries) {
       if (entry.key.isEmpty) throw ArgumentError.value(entry.key, 'key');
@@ -218,6 +299,7 @@ final class BusinessRepository {
     for (final kind in BusinessEntityKind.values) {
       await _replaceEntities(kind, snapshot.entities[kind]!);
     }
+    await _replaceExtensionEntities(snapshot.extensionEntities);
     await _replacePreferences(preferences);
     if (writeReceipt) await _writeMigrationReceipt();
   }
@@ -227,6 +309,7 @@ final class BusinessRepository {
       for (final kind in BusinessEntityKind.values) {
         await _database.customStatement('DELETE FROM ${kind.tableName};');
       }
+      await _database.customStatement('DELETE FROM extension_entity_rows;');
       await _database.customStatement('DELETE FROM preference_rows;');
     });
   }
@@ -294,6 +377,35 @@ final class BusinessRepository {
       await _upsertEntity(kind, row, updatedAt: updatedAt);
     }
   }
+
+  Future<void> _replaceExtensionEntities(
+    List<BusinessExtensionEntityValue> rows,
+  ) async {
+    await _database.customStatement('DELETE FROM extension_entity_rows;');
+    final updatedAt = DateTime.now().toUtc().microsecondsSinceEpoch;
+    for (final row in rows) {
+      await _upsertExtensionEntity(row, updatedAt: updatedAt);
+    }
+  }
+
+  Future<void> _upsertExtensionEntity(
+    BusinessExtensionEntityValue row, {
+    required int updatedAt,
+  }) => _database.customStatement(
+    'INSERT INTO extension_entity_rows '
+    '(kind, id, sort_order, owner_id, payload, updated_at) '
+    'VALUES (?, ?, ?, ?, ?, ?) ON CONFLICT(kind, id) DO UPDATE SET '
+    'sort_order = excluded.sort_order, owner_id = excluded.owner_id, '
+    'payload = excluded.payload, updated_at = excluded.updated_at;',
+    <Object?>[
+      row.kind,
+      row.id,
+      row.sortOrder,
+      row.ownerId,
+      row.payload,
+      updatedAt,
+    ],
+  );
 
   Future<void> _upsertEntity(
     BusinessEntityKind kind,
@@ -473,6 +585,29 @@ WHERE id IN ($placeholders);
         if (decoded['assistantId'] != assistantId) {
           throw ArgumentError.value(row.payload, 'payload');
         }
+      }
+    }
+  }
+
+  static void _validateExtensionRows(List<BusinessExtensionEntityValue> rows) {
+    final ids = <String>{};
+    for (final row in rows) {
+      if (row.kind.isEmpty) throw ArgumentError.value(row.kind, 'kind');
+      if (row.id.isEmpty) throw ArgumentError.value(row.id, 'id');
+      if (row.sortOrder < 0) {
+        throw ArgumentError.value(row.sortOrder, 'sortOrder');
+      }
+      if (!ids.add('${row.kind}\u0000${row.id}')) {
+        throw ArgumentError.value(row.id, 'duplicateId');
+      }
+      final Object? decoded;
+      try {
+        decoded = jsonDecode(row.payload);
+      } on FormatException {
+        throw ArgumentError.value(row.payload, 'payload');
+      }
+      if (decoded is! Map) {
+        throw ArgumentError.value(row.payload, 'payload');
       }
     }
   }

@@ -76,4 +76,40 @@ void main() {
       'wo',
     ]);
   });
+
+  test('final options keep structured provider parts out of the body', () {
+    final parts = ChatActions.assistantPartsForFinalText(
+      parts: const [
+        TextPart('正文\n'),
+        ReasoningPart('先想一想'),
+        ToolCallPart('{"name":"lookup"}'),
+        ImagePart(uri: 'https://example.com/scene.png'),
+        FilePart(uri: '/tmp/scene.txt', name: 'scene.txt', mime: 'text/plain'),
+        TextPart(
+          '后续文本\n<kelivo_options>\n'
+          '<option>调查</option>\n'
+          '<option>离开</option>\n'
+          '</kelivo_options>',
+        ),
+      ],
+      assistantId: 'assistant-1',
+    );
+
+    expect(parts.map((part) => part.kind), [
+      'text',
+      'reasoning',
+      'tool_call',
+      'image',
+      'file',
+      'text',
+      'reply_options',
+    ]);
+    expect(
+      parts.whereType<TextPart>().map((part) => part.text).join(),
+      '正文\n后续文本',
+    );
+    final options = parts.whereType<ReplyOptionsPart>().single;
+    expect(options.assistantId, 'assistant-1');
+    expect(options.options, ['调查', '离开']);
+  });
 }

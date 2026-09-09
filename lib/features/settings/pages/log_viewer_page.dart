@@ -2014,6 +2014,7 @@ Color _contextSourceColor(BuildContext context, ContextSource source) {
       return cs.primaryFixedDim;
     case ContextSource.memoryRules:
     case ContextSource.memorySnapshot:
+    case ContextSource.storyMemory:
       return cs.tertiary;
     case ContextSource.worldBook:
       return colors.success;
@@ -2049,6 +2050,8 @@ String _contextSourceLabel(AppLocalizations l10n, ContextSource source) {
       return l10n.contextLogSourcePromptPreset;
     case ContextSource.memorySnapshot:
       return l10n.contextLogSourceMemorySnapshot;
+    case ContextSource.storyMemory:
+      return l10n.contextLogSourceStoryMemory;
     case ContextSource.chatHistory:
       return l10n.contextLogSourceChatHistory;
     case ContextSource.toolCall:

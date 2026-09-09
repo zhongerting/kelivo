@@ -228,6 +228,54 @@ void main() {
   });
 
   test(
+    'reply options part roundtrips through Drift and stays out of content',
+    () async {
+      final now = DateTime.utc(2026, 8, 9, 14);
+      const conversationId = 'conversation-reply-options';
+      const messageId = 'message-reply-options';
+      final message = ChatMessage(
+        id: messageId,
+        role: 'assistant',
+        conversationId: conversationId,
+        timestamp: now,
+        parts: [
+          const TextPart('正文'),
+          ReplyOptionsPart(
+            assistantId: 'assistant-1',
+            options: const ['继续', '暂时离开'],
+          ),
+        ],
+      );
+
+      await repository.putMigrationBatch(
+        conversations: [
+          Conversation(
+            id: conversationId,
+            title: 'Reply options',
+            createdAt: now,
+            updatedAt: now,
+            messageIds: const [messageId],
+          ),
+        ],
+        messages: [(message: message, messageOrder: 0)],
+        toolEventsByMessageId: const {},
+        geminiSignaturesByMessageId: const {},
+      );
+
+      final restored = await repository.getMessage(messageId);
+      expect(restored, isNotNull);
+      expect(restored!.content, '正文');
+      expect(restored.parts, hasLength(2));
+      expect(restored.parts[1], message.parts[1]);
+
+      await repository.updateMessage(restored);
+      final updated = await repository.getMessage(messageId);
+      expect(updated!.parts, message.parts);
+      expect(updated.content, '正文');
+    },
+  );
+
+  test(
     'attachment parts mark asset references dirty without marker strings',
     () async {
       final now = DateTime.utc(2026, 8, 9, 13);

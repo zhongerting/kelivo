@@ -16545,6 +16545,54 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Character settings'**
   String get contextLogSourceCharacterPrompt;
+
+  /// No description provided for @contextLogSourceStoryMemory.
+  ///
+  /// In en, this message translates to:
+  /// **'Story memory'**
+  String get contextLogSourceStoryMemory;
+
+  /// No description provided for @replyOptionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Reply options'**
+  String get replyOptionsTitle;
+
+  /// No description provided for @replyOptionsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} options'**
+  String replyOptionsCount(int count);
+
+  /// No description provided for @replyOptionsAppend.
+  ///
+  /// In en, this message translates to:
+  /// **'Append'**
+  String get replyOptionsAppend;
+
+  /// No description provided for @replyOptionsAppendTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Append this option to the input'**
+  String get replyOptionsAppendTooltip;
+
+  /// No description provided for @replyOptionsSendTooltip.
+  ///
+  /// In en, this message translates to:
+  /// **'Send this option'**
+  String get replyOptionsSendTooltip;
+
+  /// No description provided for @replyOptionsExpand.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand reply options'**
+  String get replyOptionsExpand;
+
+  /// No description provided for @replyOptionsCollapse.
+  ///
+  /// In en, this message translates to:
+  /// **'Collapse reply options'**
+  String get replyOptionsCollapse;
 }
 
 class _AppLocalizationsDelegate
