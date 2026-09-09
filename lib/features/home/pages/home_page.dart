@@ -1394,8 +1394,9 @@ class _HomePageState extends State<HomePage>
 
   Widget _buildChatInputBar(BuildContext context, {required bool isTablet}) {
     final conversation = _controller.currentConversation;
+    final settings = context.watch<SettingsProvider>();
     final chatModel = resolveChatModel(
-      context.watch<SettingsProvider>(),
+      settings,
       conversation: conversation,
       assistant: context.watch<AssistantProvider>().currentAssistant,
     );
@@ -1404,6 +1405,7 @@ class _HomePageState extends State<HomePage>
       chatModelProviderKey: chatModel.providerKey,
       chatModelId: chatModel.modelId,
       chatModelIsConversationOverride:
+          settings.perChatModelEnabled &&
           conversation?.chatModelProvider != null &&
           conversation?.chatModelId != null,
       inputFocus: _inputFocus,
@@ -1450,13 +1452,31 @@ class _HomePageState extends State<HomePage>
         final assistantProvider = context.read<AssistantProvider>();
         final settingsProvider = context.read<SettingsProvider>();
         final assistant = assistantProvider.currentAssistant;
-        if (assistant != null) {
+        if (assistant == null) return;
+        if (PlatformUtils.isDesktop) {
+          // Desktop popover keeps the legacy global-settings sync flow.
           if (assistant.thinkingBudget != null) {
             settingsProvider.setThinkingBudget(assistant.thinkingBudget);
           }
           await _openReasoningSettings();
           if (!mounted) return;
           final chosen = settingsProvider.thinkingBudget;
+          await assistantProvider.updateAssistant(
+            assistant.copyWith(thinkingBudget: chosen),
+          );
+          return;
+        }
+        // Mobile: seed the sheet via initialBudget instead of pre-writing
+        // global settings. setThinkingBudget notifies synchronously and would
+        // rebuild the home page (message list, input bar, drawer) on the
+        // first frames of the sheet's entrance animation, dropping frames.
+        int? chosen;
+        await _openReasoningSettings(
+          initialBudget: assistant.thinkingBudget,
+          onChanged: (v) => chosen = v,
+        );
+        if (!mounted) return;
+        if (chosen != null && chosen != assistant.thinkingBudget) {
           await assistantProvider.updateAssistant(
             assistant.copyWith(thinkingBudget: chosen),
           );
@@ -1704,7 +1724,10 @@ class _HomePageState extends State<HomePage>
     }
   }
 
-  Future<void> _openReasoningSettings() async {
+  Future<void> _openReasoningSettings({
+    int? initialBudget,
+    ValueChanged<int>? onChanged,
+  }) async {
     final model = _resolvedChatModel();
     if (PlatformUtils.isDesktop) {
       await showDesktopReasoningBudgetPopover(
@@ -1718,6 +1741,8 @@ class _HomePageState extends State<HomePage>
         context,
         modelProvider: model.providerKey,
         modelId: model.modelId,
+        initialBudget: initialBudget,
+        onChanged: onChanged,
       );
     }
   }

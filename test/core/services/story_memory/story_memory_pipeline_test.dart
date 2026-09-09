@@ -38,6 +38,7 @@ void main() {
   Object? generatorError;
   var generatorCalls = 0;
   var lastPrompt = '';
+  String? lastConversationId;
 
   setUp(() async {
     SharedPreferences.setMockInitialValues({});
@@ -78,6 +79,7 @@ void main() {
     generatorError = null;
     generatorCalls = 0;
     lastPrompt = '';
+    lastConversationId = null;
     pipeline = StoryMemoryPipelineService(
       chatService: chatService,
       repository: repository,
@@ -88,10 +90,12 @@ void main() {
             required ProviderConfig config,
             required String modelId,
             required String prompt,
+            String? conversationId,
             int? thinkingBudget,
           }) async {
             generatorCalls++;
             lastPrompt = prompt;
+            lastConversationId = conversationId;
             final error = generatorError;
             if (error != null) throw error;
             return nextResponse ?? '';
@@ -135,6 +139,7 @@ void main() {
       expect(result.error, isNull);
       expect(result.operationCount, 2);
       expect(generatorCalls, 1);
+      expect(lastConversationId, conversation.id);
       expect(lastPrompt, contains('message 0'));
       final snapshot = await repository.read(conversation.id);
       expect(snapshot.rowsFor(StoryMemoryTable.character), hasLength(1));

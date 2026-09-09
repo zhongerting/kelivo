@@ -3250,6 +3250,54 @@ abstract class AppLocalizations {
   /// **'Kelivo\'s data is still in use by another app process. Close any other Kelivo window, then restart. Your chat data has not been opened by this process.'**
   String get backupRestoreBusinessLeaseUnavailableContent;
 
+  /// No description provided for @restoreProgressTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring your backup'**
+  String get restoreProgressTitle;
+
+  /// No description provided for @restoreProgressWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Kelivo open until this finishes. If you close it now, the next launch starts this over.'**
+  String get restoreProgressWarning;
+
+  /// No description provided for @restoreProgressStageCheckingBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Checking the backup'**
+  String get restoreProgressStageCheckingBackup;
+
+  /// No description provided for @restoreProgressStagePreservingCurrentData.
+  ///
+  /// In en, this message translates to:
+  /// **'Preserving your current data'**
+  String get restoreProgressStagePreservingCurrentData;
+
+  /// No description provided for @restoreProgressStageInstallingBackup.
+  ///
+  /// In en, this message translates to:
+  /// **'Installing the backup'**
+  String get restoreProgressStageInstallingBackup;
+
+  /// No description provided for @restoreProgressStageVerifying.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying'**
+  String get restoreProgressStageVerifying;
+
+  /// No description provided for @restoreProgressStageRollingBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Restoring your previous data'**
+  String get restoreProgressStageRollingBack;
+
+  /// No description provided for @restoreProgressStageFinishing.
+  ///
+  /// In en, this message translates to:
+  /// **'Finishing up'**
+  String get restoreProgressStageFinishing;
+
   /// No description provided for @backupRestoreFailureRestartButton.
   ///
   /// In en, this message translates to:
@@ -4707,6 +4755,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'e.g. 2048 (-1 auto, 0 off)'**
   String get reasoningBudgetSheetCustomHint;
+
+  /// No description provided for @reasoningBudgetSliderLow.
+  ///
+  /// In en, this message translates to:
+  /// **'Low'**
+  String get reasoningBudgetSliderLow;
+
+  /// No description provided for @reasoningBudgetSliderMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get reasoningBudgetSliderMedium;
+
+  /// No description provided for @reasoningBudgetSliderHigh.
+  ///
+  /// In en, this message translates to:
+  /// **'High'**
+  String get reasoningBudgetSliderHigh;
+
+  /// No description provided for @reasoningBudgetSliderXhigh.
+  ///
+  /// In en, this message translates to:
+  /// **'XHigh'**
+  String get reasoningBudgetSliderXhigh;
+
+  /// No description provided for @reasoningBudgetSliderMax.
+  ///
+  /// In en, this message translates to:
+  /// **'Max'**
+  String get reasoningBudgetSliderMax;
 
   /// No description provided for @chatMessageWidgetFileNotFound.
   ///
@@ -6166,6 +6244,18 @@ abstract class AppLocalizations {
   /// **'Global default chat model'**
   String get defaultModelPageChatModelSubtitle;
 
+  /// No description provided for @defaultModelPagePerChatModelTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Per-Chat Model'**
+  String get defaultModelPagePerChatModelTitle;
+
+  /// No description provided for @defaultModelPagePerChatModelSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'On: picking a model in a chat applies to that chat only. Off: it becomes the current assistant\'s model, so every chat using that assistant follows it.'**
+  String get defaultModelPagePerChatModelSubtitle;
+
   /// No description provided for @defaultModelPageTitleModelTitle.
   ///
   /// In en, this message translates to:
@@ -6558,18 +6648,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Reasoning'**
   String get modelDetailSheetReasoningAbility;
-
-  /// No description provided for @modelDetailSheetProviderOverrideDescription.
-  ///
-  /// In en, this message translates to:
-  /// **'Provider overrides: customize provider for a specific model.'**
-  String get modelDetailSheetProviderOverrideDescription;
-
-  /// No description provided for @modelDetailSheetAddProviderOverride.
-  ///
-  /// In en, this message translates to:
-  /// **'Add Provider Override'**
-  String get modelDetailSheetAddProviderOverride;
 
   /// No description provided for @modelDetailSheetCustomHeadersTitle.
   ///
@@ -11107,6 +11185,12 @@ abstract class AppLocalizations {
   /// **'Read a one-shot location from this device, requires the location permission.'**
   String get assistantEditLocalToolLocationSubtitle;
 
+  /// No description provided for @assistantEditLocationPermissionSettingsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Location permission is blocked. Allow location access in system settings, then turn this tool on again.'**
+  String get assistantEditLocationPermissionSettingsMessage;
+
   /// No description provided for @assistantEditLocalToolWeatherTitle.
   ///
   /// In en, this message translates to:
@@ -11302,7 +11386,7 @@ abstract class AppLocalizations {
   /// No description provided for @healthDataSettingsTypeSleepSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Sleep duration last night'**
+  /// **'Past 24 hours: sleep, time in bed, awake periods and sleep stages'**
   String get healthDataSettingsTypeSleepSubtitle;
 
   /// No description provided for @healthDataSettingsTypeMindfulnessTitle.
@@ -11908,7 +11992,7 @@ abstract class AppLocalizations {
   /// No description provided for @autoRetryFooter.
   ///
   /// In en, this message translates to:
-  /// **'Auto-retry only runs if this request has not produced any output yet.'**
+  /// **'Auto-retry only runs if the current model response has not produced any output yet.'**
   String get autoRetryFooter;
 
   /// No description provided for @autoRetryCountdown.
@@ -16593,6 +16677,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Collapse reply options'**
   String get replyOptionsCollapse;
+
+  /// No description provided for @healthDataSettingsCategoryReproductive.
+  ///
+  /// In en, this message translates to:
+  /// **'Reproductive health'**
+  String get healthDataSettingsCategoryReproductive;
+
+  /// No description provided for @healthDataSettingsTypeMenstrualFlowTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Menstrual flow'**
+  String get healthDataSettingsTypeMenstrualFlowTitle;
+
+  /// No description provided for @healthDataSettingsTypeMenstrualFlowSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Recorded menstrual flow and cycle starts in the past 90 days'**
+  String get healthDataSettingsTypeMenstrualFlowSubtitle;
 }
 
 class _AppLocalizationsDelegate

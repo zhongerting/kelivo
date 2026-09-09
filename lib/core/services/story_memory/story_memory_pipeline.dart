@@ -69,6 +69,7 @@ final class StoryMemoryPipelineService {
       required ProviderConfig config,
       required String modelId,
       required String prompt,
+      String? conversationId,
       int? thinkingBudget,
     })?
     generateText,
@@ -78,8 +79,10 @@ final class StoryMemoryPipelineService {
     required ProviderConfig config,
     required String modelId,
     required String prompt,
+    String? conversationId,
     int? thinkingBudget,
   }) => ChatApiService.generateText(
+    conversationId: conversationId,
     config: config,
     modelId: modelId,
     prompt: prompt,
@@ -95,6 +98,7 @@ final class StoryMemoryPipelineService {
     required ProviderConfig config,
     required String modelId,
     required String prompt,
+    String? conversationId,
     int? thinkingBudget,
   })
   _generateText;
@@ -394,6 +398,7 @@ final class StoryMemoryPipelineService {
         ? (assistant.thinkingBudget ?? appSettings.thinkingBudget)
         : 0;
     final raw = await _generateText(
+      conversationId: conversation.id,
       config: config,
       modelId: modelId,
       prompt: prompt,

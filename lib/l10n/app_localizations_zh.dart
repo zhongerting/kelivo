@@ -1646,6 +1646,30 @@ class AppLocalizationsZh extends AppLocalizations {
       'Kelivo 的数据仍被另一个应用进程占用。请关闭其他 Kelivo 窗口后重新启动；当前进程尚未打开聊天数据。';
 
   @override
+  String get restoreProgressTitle => '正在恢复备份';
+
+  @override
+  String get restoreProgressWarning => '请保持 Kelivo 开启直到完成。此时关闭应用，下次启动会从头再来一次。';
+
+  @override
+  String get restoreProgressStageCheckingBackup => '正在校验备份';
+
+  @override
+  String get restoreProgressStagePreservingCurrentData => '正在保留当前数据';
+
+  @override
+  String get restoreProgressStageInstallingBackup => '正在写入备份';
+
+  @override
+  String get restoreProgressStageVerifying => '正在验证';
+
+  @override
+  String get restoreProgressStageRollingBack => '正在恢复原有数据';
+
+  @override
+  String get restoreProgressStageFinishing => '即将完成';
+
+  @override
   String get backupRestoreFailureRestartButton => '重启 Kelivo';
 
   @override
@@ -2422,6 +2446,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get reasoningBudgetSheetCustomHint => '例如：2048 (-1 自动，0 关闭)';
+
+  @override
+  String get reasoningBudgetSliderLow => 'Low';
+
+  @override
+  String get reasoningBudgetSliderMedium => 'Medium';
+
+  @override
+  String get reasoningBudgetSliderHigh => 'High';
+
+  @override
+  String get reasoningBudgetSliderXhigh => 'XHigh';
+
+  @override
+  String get reasoningBudgetSliderMax => 'Max';
 
   @override
   String chatMessageWidgetFileNotFound(String fileName) {
@@ -3212,6 +3251,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get defaultModelPageChatModelSubtitle => '全局默认的聊天模型';
 
   @override
+  String get defaultModelPagePerChatModelTitle => '每个对话独立模型';
+
+  @override
+  String get defaultModelPagePerChatModelSubtitle =>
+      '开启后，在对话中切换模型只影响当前对话；关闭后会直接修改当前助手的模型，使用该助手的所有对话都会跟随。';
+
+  @override
   String get defaultModelPageTitleModelTitle => '标题总结模型';
 
   @override
@@ -3432,13 +3478,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get modelDetailSheetReasoningAbility => '推理';
-
-  @override
-  String get modelDetailSheetProviderOverrideDescription =>
-      '供应商重写：允许为特定模型自定义供应商设置。（暂未实现）';
-
-  @override
-  String get modelDetailSheetAddProviderOverride => '添加供应商重写';
 
   @override
   String get modelDetailSheetCustomHeadersTitle => '自定义 Headers';
@@ -5829,6 +5868,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get assistantEditLocalToolLocationSubtitle => '读取本设备的一次性位置，需要授予定位权限。';
 
   @override
+  String get assistantEditLocationPermissionSettingsMessage =>
+      '定位权限已被禁止。请在系统设置中允许定位访问，然后重新开启此工具。';
+
+  @override
   String get assistantEditLocalToolWeatherTitle => '天气';
 
   @override
@@ -5932,7 +5975,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get healthDataSettingsTypeSleepTitle => '睡眠';
 
   @override
-  String get healthDataSettingsTypeSleepSubtitle => '睡眠时长';
+  String get healthDataSettingsTypeSleepSubtitle => '最近 24 小时的睡眠、卧床、清醒与睡眠分期';
 
   @override
   String get healthDataSettingsTypeMindfulnessTitle => '静息';
@@ -6247,7 +6290,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get autoRetryRestoreDefaults => '恢复默认';
 
   @override
-  String get autoRetryFooter => '仅在本次请求尚未产生任何输出时才会自动重试。';
+  String get autoRetryFooter => '仅在当前这轮模型响应尚未产生任何输出时才会自动重试。';
 
   @override
   String autoRetryCountdown(int seconds, int attempt, int maxRetries) {
@@ -8843,6 +8886,16 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get replyOptionsCollapse => '收起剧情选项';
+
+  @override
+  String get healthDataSettingsCategoryReproductive => '生殖健康';
+
+  @override
+  String get healthDataSettingsTypeMenstrualFlowTitle => '经期记录';
+
+  @override
+  String get healthDataSettingsTypeMenstrualFlowSubtitle =>
+      '最近 90 天记录的经量与周期开始日期';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hans`).
@@ -10487,6 +10540,30 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
       'Kelivo 的数据仍被另一个应用进程占用。请关闭其他 Kelivo 窗口后重新启动；当前进程尚未打开聊天数据。';
 
   @override
+  String get restoreProgressTitle => '正在恢复备份';
+
+  @override
+  String get restoreProgressWarning => '请保持 Kelivo 开启直到完成。此时关闭应用，下次启动会从头再来一次。';
+
+  @override
+  String get restoreProgressStageCheckingBackup => '正在校验备份';
+
+  @override
+  String get restoreProgressStagePreservingCurrentData => '正在保留当前数据';
+
+  @override
+  String get restoreProgressStageInstallingBackup => '正在写入备份';
+
+  @override
+  String get restoreProgressStageVerifying => '正在验证';
+
+  @override
+  String get restoreProgressStageRollingBack => '正在恢复原有数据';
+
+  @override
+  String get restoreProgressStageFinishing => '即将完成';
+
+  @override
   String get backupRestoreFailureRestartButton => '重启 Kelivo';
 
   @override
@@ -11263,6 +11340,21 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get reasoningBudgetSheetCustomHint => '例如：2048 (-1 自动，0 关闭)';
+
+  @override
+  String get reasoningBudgetSliderLow => 'Low';
+
+  @override
+  String get reasoningBudgetSliderMedium => 'Medium';
+
+  @override
+  String get reasoningBudgetSliderHigh => 'High';
+
+  @override
+  String get reasoningBudgetSliderXhigh => 'XHigh';
+
+  @override
+  String get reasoningBudgetSliderMax => 'Max';
 
   @override
   String chatMessageWidgetFileNotFound(String fileName) {
@@ -12053,6 +12145,13 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get defaultModelPageChatModelSubtitle => '全局默认的聊天模型';
 
   @override
+  String get defaultModelPagePerChatModelTitle => '每个对话独立模型';
+
+  @override
+  String get defaultModelPagePerChatModelSubtitle =>
+      '开启后，在对话中切换模型只影响当前对话；关闭后会直接修改当前助手的模型，使用该助手的所有对话都会跟随。';
+
+  @override
   String get defaultModelPageTitleModelTitle => '标题总结模型';
 
   @override
@@ -12273,13 +12372,6 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get modelDetailSheetReasoningAbility => '推理';
-
-  @override
-  String get modelDetailSheetProviderOverrideDescription =>
-      '供应商重写：允许为特定模型自定义供应商设置。（暂未实现）';
-
-  @override
-  String get modelDetailSheetAddProviderOverride => '添加供应商重写';
 
   @override
   String get modelDetailSheetCustomHeadersTitle => '自定义 Headers';
@@ -14593,6 +14685,10 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get assistantEditLocalToolLocationSubtitle => '读取本设备的一次性位置，需要授予定位权限。';
 
   @override
+  String get assistantEditLocationPermissionSettingsMessage =>
+      '定位权限已被禁止。请在系统设置中允许定位访问，然后重新开启此工具。';
+
+  @override
   String get assistantEditLocalToolWeatherTitle => '天气';
 
   @override
@@ -14696,7 +14792,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get healthDataSettingsTypeSleepTitle => '睡眠';
 
   @override
-  String get healthDataSettingsTypeSleepSubtitle => '睡眠时长';
+  String get healthDataSettingsTypeSleepSubtitle => '最近 24 小时的睡眠、卧床、清醒与睡眠分期';
 
   @override
   String get healthDataSettingsTypeMindfulnessTitle => '静息';
@@ -15011,7 +15107,7 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
   String get autoRetryRestoreDefaults => '恢复默认';
 
   @override
-  String get autoRetryFooter => '仅在本次请求尚未产生任何输出时才会自动重试。';
+  String get autoRetryFooter => '仅在当前这轮模型响应尚未产生任何输出时才会自动重试。';
 
   @override
   String autoRetryCountdown(int seconds, int attempt, int maxRetries) {
@@ -17587,6 +17683,16 @@ class AppLocalizationsZhHans extends AppLocalizationsZh {
 
   @override
   String get replyOptionsCollapse => '收起剧情选项';
+
+  @override
+  String get healthDataSettingsCategoryReproductive => '生殖健康';
+
+  @override
+  String get healthDataSettingsTypeMenstrualFlowTitle => '经期记录';
+
+  @override
+  String get healthDataSettingsTypeMenstrualFlowSubtitle =>
+      '最近 90 天记录的经量与周期开始日期';
 }
 
 /// The translations for Chinese, using the Han script (`zh_Hant`).
@@ -19231,6 +19337,31 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
       'Kelivo 的資料仍由另一個應用程式程序使用。請關閉其他 Kelivo 視窗後重新啟動；目前程序尚未開啟聊天資料。';
 
   @override
+  String get restoreProgressTitle => '正在還原備份';
+
+  @override
+  String get restoreProgressWarning =>
+      '請保持 Kelivo 開啟直到完成。此時關閉應用程式，下次啟動會從頭再來一次。';
+
+  @override
+  String get restoreProgressStageCheckingBackup => '正在驗證備份';
+
+  @override
+  String get restoreProgressStagePreservingCurrentData => '正在保留目前資料';
+
+  @override
+  String get restoreProgressStageInstallingBackup => '正在寫入備份';
+
+  @override
+  String get restoreProgressStageVerifying => '正在驗證';
+
+  @override
+  String get restoreProgressStageRollingBack => '正在還原原有資料';
+
+  @override
+  String get restoreProgressStageFinishing => '即將完成';
+
+  @override
   String get backupRestoreFailureRestartButton => '重新啟動 Kelivo';
 
   @override
@@ -20006,6 +20137,21 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get reasoningBudgetSheetCustomHint => '例如：2048 (-1 自動，0 關閉)';
+
+  @override
+  String get reasoningBudgetSliderLow => 'Low';
+
+  @override
+  String get reasoningBudgetSliderMedium => 'Medium';
+
+  @override
+  String get reasoningBudgetSliderHigh => 'High';
+
+  @override
+  String get reasoningBudgetSliderXhigh => 'XHigh';
+
+  @override
+  String get reasoningBudgetSliderMax => 'Max';
 
   @override
   String chatMessageWidgetFileNotFound(String fileName) {
@@ -20796,6 +20942,13 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get defaultModelPageChatModelSubtitle => '全域預設的聊天模型';
 
   @override
+  String get defaultModelPagePerChatModelTitle => '每個對話獨立模型';
+
+  @override
+  String get defaultModelPagePerChatModelSubtitle =>
+      '開啟後，在對話中切換模型只影響目前對話；關閉後會直接修改目前助手的模型，使用該助手的所有對話都會跟隨。';
+
+  @override
   String get defaultModelPageTitleModelTitle => '標題總結模型';
 
   @override
@@ -21016,13 +21169,6 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get modelDetailSheetReasoningAbility => '推理';
-
-  @override
-  String get modelDetailSheetProviderOverrideDescription =>
-      '供應商覆寫：允許為特定模型自訂供應商設定。（暫未實現）';
-
-  @override
-  String get modelDetailSheetAddProviderOverride => '新增供應商覆寫';
 
   @override
   String get modelDetailSheetCustomHeadersTitle => '自訂 Headers';
@@ -23411,6 +23557,10 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get assistantEditLocalToolLocationSubtitle => '讀取本裝置的一次性位置，需要授予定位權限。';
 
   @override
+  String get assistantEditLocationPermissionSettingsMessage =>
+      '定位權限已被禁止。請在系統設定中允許定位存取，然後重新開啟此工具。';
+
+  @override
   String get assistantEditLocalToolWeatherTitle => '天氣';
 
   @override
@@ -23514,7 +23664,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get healthDataSettingsTypeSleepTitle => '睡眠';
 
   @override
-  String get healthDataSettingsTypeSleepSubtitle => '睡眠時長';
+  String get healthDataSettingsTypeSleepSubtitle => '最近 24 小時的睡眠、臥床、清醒與睡眠分期';
 
   @override
   String get healthDataSettingsTypeMindfulnessTitle => '靜息';
@@ -23829,7 +23979,7 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
   String get autoRetryRestoreDefaults => '恢復預設';
 
   @override
-  String get autoRetryFooter => '僅在本次請求尚未產生任何輸出時才會自動重試。';
+  String get autoRetryFooter => '僅在目前這輪模型回應尚未產生任何輸出時才會自動重試。';
 
   @override
   String autoRetryCountdown(int seconds, int attempt, int maxRetries) {
@@ -26405,4 +26555,14 @@ class AppLocalizationsZhHant extends AppLocalizationsZh {
 
   @override
   String get replyOptionsCollapse => '收起劇情選項';
+
+  @override
+  String get healthDataSettingsCategoryReproductive => '生殖健康';
+
+  @override
+  String get healthDataSettingsTypeMenstrualFlowTitle => '經期記錄';
+
+  @override
+  String get healthDataSettingsTypeMenstrualFlowSubtitle =>
+      '最近 90 天記錄的經量與週期開始日期';
 }

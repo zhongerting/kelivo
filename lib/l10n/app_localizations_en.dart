@@ -1706,6 +1706,32 @@ class AppLocalizationsEn extends AppLocalizations {
       'Kelivo\'s data is still in use by another app process. Close any other Kelivo window, then restart. Your chat data has not been opened by this process.';
 
   @override
+  String get restoreProgressTitle => 'Restoring your backup';
+
+  @override
+  String get restoreProgressWarning =>
+      'Keep Kelivo open until this finishes. If you close it now, the next launch starts this over.';
+
+  @override
+  String get restoreProgressStageCheckingBackup => 'Checking the backup';
+
+  @override
+  String get restoreProgressStagePreservingCurrentData =>
+      'Preserving your current data';
+
+  @override
+  String get restoreProgressStageInstallingBackup => 'Installing the backup';
+
+  @override
+  String get restoreProgressStageVerifying => 'Verifying';
+
+  @override
+  String get restoreProgressStageRollingBack => 'Restoring your previous data';
+
+  @override
+  String get restoreProgressStageFinishing => 'Finishing up';
+
+  @override
   String get backupRestoreFailureRestartButton => 'Restart Kelivo';
 
   @override
@@ -2507,6 +2533,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get reasoningBudgetSheetCustomHint => 'e.g. 2048 (-1 auto, 0 off)';
+
+  @override
+  String get reasoningBudgetSliderLow => 'Low';
+
+  @override
+  String get reasoningBudgetSliderMedium => 'Medium';
+
+  @override
+  String get reasoningBudgetSliderHigh => 'High';
+
+  @override
+  String get reasoningBudgetSliderXhigh => 'XHigh';
+
+  @override
+  String get reasoningBudgetSliderMax => 'Max';
 
   @override
   String chatMessageWidgetFileNotFound(String fileName) {
@@ -3322,6 +3363,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get defaultModelPageChatModelSubtitle => 'Global default chat model';
 
   @override
+  String get defaultModelPagePerChatModelTitle => 'Per-Chat Model';
+
+  @override
+  String get defaultModelPagePerChatModelSubtitle =>
+      'On: picking a model in a chat applies to that chat only. Off: it becomes the current assistant\'s model, so every chat using that assistant follows it.';
+
+  @override
   String get defaultModelPageTitleModelTitle => 'Title Summary Model';
 
   @override
@@ -3555,13 +3603,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get modelDetailSheetReasoningAbility => 'Reasoning';
-
-  @override
-  String get modelDetailSheetProviderOverrideDescription =>
-      'Provider overrides: customize provider for a specific model.';
-
-  @override
-  String get modelDetailSheetAddProviderOverride => 'Add Provider Override';
 
   @override
   String get modelDetailSheetCustomHeadersTitle => 'Custom Headers';
@@ -6064,6 +6105,10 @@ class AppLocalizationsEn extends AppLocalizations {
       'Read a one-shot location from this device, requires the location permission.';
 
   @override
+  String get assistantEditLocationPermissionSettingsMessage =>
+      'Location permission is blocked. Allow location access in system settings, then turn this tool on again.';
+
+  @override
   String get assistantEditLocalToolWeatherTitle => 'Weather';
 
   @override
@@ -6172,7 +6217,8 @@ class AppLocalizationsEn extends AppLocalizations {
   String get healthDataSettingsTypeSleepTitle => 'Sleep';
 
   @override
-  String get healthDataSettingsTypeSleepSubtitle => 'Sleep duration last night';
+  String get healthDataSettingsTypeSleepSubtitle =>
+      'Past 24 hours: sleep, time in bed, awake periods and sleep stages';
 
   @override
   String get healthDataSettingsTypeMindfulnessTitle => 'Resting';
@@ -6501,7 +6547,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get autoRetryFooter =>
-      'Auto-retry only runs if this request has not produced any output yet.';
+      'Auto-retry only runs if the current model response has not produced any output yet.';
 
   @override
   String autoRetryCountdown(int seconds, int attempt, int maxRetries) {
@@ -9245,4 +9291,14 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get replyOptionsCollapse => 'Collapse reply options';
+
+  @override
+  String get healthDataSettingsCategoryReproductive => 'Reproductive health';
+
+  @override
+  String get healthDataSettingsTypeMenstrualFlowTitle => 'Menstrual flow';
+
+  @override
+  String get healthDataSettingsTypeMenstrualFlowSubtitle =>
+      'Recorded menstrual flow and cycle starts in the past 90 days';
 }
