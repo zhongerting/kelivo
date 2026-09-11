@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../../shared/widgets/ios_tactile.dart';
+import '../../home/services/chat_suggestion_service.dart';
 import 'package:Kelivo/theme/app_font_weights.dart';
 
 class ChatSuggestionBubbles extends StatelessWidget {
@@ -18,7 +19,7 @@ class ChatSuggestionBubbles extends StatelessWidget {
     final visible = suggestions
         .map((s) => s.trim())
         .where((s) => s.isNotEmpty)
-        .take(3)
+        .take(ChatSuggestionService.maxSuggestionCount)
         .toList();
     if (visible.isEmpty) return const SizedBox.shrink();
 

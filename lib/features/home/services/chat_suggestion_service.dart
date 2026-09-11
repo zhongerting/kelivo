@@ -5,7 +5,7 @@ import '../../../core/services/api/chat_api_service.dart';
 import '../../../core/utils/model_visible_history.dart';
 
 class ChatSuggestionService {
-  static const int maxSuggestionCount = 3;
+  static const int maxSuggestionCount = 7;
   static const int maxSuggestionChars = 300;
 
   const ChatSuggestionService();

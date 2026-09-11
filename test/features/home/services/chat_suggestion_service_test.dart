@@ -6,15 +6,35 @@ import 'package:Kelivo/features/home/services/chat_suggestion_service.dart';
 
 void main() {
   group('ChatSuggestionService.parseSuggestions', () {
-    test('keeps up to three cleaned newline suggestions', () {
+    test('keeps up to seven cleaned newline suggestions', () {
       final suggestions = ChatSuggestionService.parseSuggestions('''
 1. 继续解释
 - 给个例子
 * 换种说法
 4. 总结一下
+5. 观察四周
+6. 询问同伴
+7. 暂时离开
+8. 不应保留
 ''');
 
-      expect(suggestions, ['继续解释', '给个例子', '换种说法']);
+      expect(suggestions, [
+        '继续解释',
+        '给个例子',
+        '换种说法',
+        '总结一下',
+        '观察四周',
+        '询问同伴',
+        '暂时离开',
+      ]);
+    });
+
+    test('keeps six suggestions without padding', () {
+      final expected = List.generate(6, (i) => '行动 ${i + 1}');
+      expect(
+        ChatSuggestionService.parseSuggestions(expected.join('\n')),
+        expected,
+      );
     });
 
     test(
